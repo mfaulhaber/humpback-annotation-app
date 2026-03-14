@@ -1,0 +1,12 @@
+{
+  "name": "@humpback/frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.log('Frontend scaffolding is not implemented yet. Choose the V1 UI framework next.')\"",
+    "typecheck": "tsc --project tsconfig.json --pretty false",
+    "build": "pnpm run typecheck",
+    "test": "node -e \"console.log('No frontend tests are configured yet.')\""
+  }
+}

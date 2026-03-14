@@ -1,0 +1,33 @@
+{
+  "name": "humpback-annotation-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Workspace bootstrap for the Humpback Annotation App.",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=22 <23",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "preinstall": "node ./scripts/check-node.mjs",
+    "dev": "pnpm --filter @humpback/scripts run dev",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "build": "pnpm -r --if-present run build",
+    "test": "pnpm -r --if-present run test",
+    "db:local:init": "pnpm --filter @humpback/scripts run db:local:init",
+    "db:local:seed": "pnpm --filter @humpback/scripts run db:local:seed",
+    "cdk:synth": "pnpm --filter @humpback/cdk run synth"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.15",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/node": "22.19.15",
+      "tsx": "4.21.0",
+      "typescript": "5.9.3"
+    }
+  }
+}

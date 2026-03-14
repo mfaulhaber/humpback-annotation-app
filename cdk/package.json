@@ -1,0 +1,13 @@
+{
+  "name": "@humpback/cdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.log('CDK app scaffolding is not implemented yet.')\"",
+    "typecheck": "tsc --project tsconfig.json --pretty false",
+    "build": "pnpm run typecheck",
+    "test": "node -e \"console.log('No infrastructure tests are configured yet.')\"",
+    "synth": "tsx src/synth.ts"
+  }
+}

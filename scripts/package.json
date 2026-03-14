@@ -1,0 +1,14 @@
+{
+  "name": "@humpback/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/dev.ts",
+    "typecheck": "tsc --project tsconfig.json --pretty false",
+    "build": "pnpm run typecheck",
+    "test": "node -e \"console.log('No script package tests are configured yet.')\"",
+    "db:local:init": "tsx src/db-local-init.ts",
+    "db:local:seed": "tsx src/db-local-seed.ts"
+  }
+}

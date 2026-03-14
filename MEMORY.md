@@ -11,7 +11,8 @@ repo conventions, see `CLAUDE.md`.
 - Domain: whale vocalization sample browsing and labeling
 - Primary user flows: browse, preview, label, reveal aggregate after labeling,
   suggest next unlabeled sample, admin reporting
-- Current repo state: planning documents only; no app scaffold committed yet
+- Current repo state: design docs plus a committed workspace/bootstrap
+  foundation; product runtime code is not implemented yet
 
 ## Current Repository Layout
 
@@ -23,6 +24,17 @@ humpback-annotation-app/
 ├── MEMORY.md
 ├── PLANS.md
 ├── STATUS.md
+├── package.json
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── .nvmrc
+├── .node-version
+├── frontend/
+├── api/
+├── cdk/
+├── scripts/
+├── tests/
+├── local_media/
 ├── technical_high_level_design_pack.md
 ├── whale_annotation_v1_architecture_spec.md
 ├── whale_annotation_local_development_stack.md
@@ -234,3 +246,34 @@ Representative local auth headers:
 - `x-dev-role: annotator`
 - `x-dev-user: admin_user`
 - `x-dev-role: admin`
+
+## Tooling Baseline
+
+- Package manager: `pnpm@10.29.3`
+- Pinned runtime: Node 22 via `.nvmrc` and `.node-version`
+- Shared TypeScript tooling at repo root:
+  `typescript@5.9.3`, `tsx@4.21.0`, `@types/node@22.19.15`
+- Workspace packages:
+  - `frontend` for the future web app
+  - `api` for future Lambda/API handlers
+  - `cdk` for future infrastructure code
+  - `scripts` for local bootstrap helpers
+  - `tests` for future repo-level test code
+
+Bootstrap commands available today:
+
+- `pnpm install`
+- `pnpm dev`
+- `pnpm typecheck`
+- `pnpm build`
+- `pnpm test`
+- `pnpm db:local:init`
+- `pnpm db:local:seed`
+- `pnpm cdk:synth`
+
+Current command behavior:
+
+- `pnpm typecheck`, `pnpm build`, and `pnpm test` run against the placeholder
+  workspace packages and should pass
+- `pnpm db:local:init`, `pnpm db:local:seed`, and `pnpm cdk:synth` are
+  scaffolded placeholders that explain the next implementation step

@@ -14,8 +14,13 @@ Goal:
 Suggested milestones:
 
 1. Choose and document the concrete implementation stack for frontend, API,
-   infrastructure, and auth.
+   infrastructure, and auth. Status: in progress. `pnpm`, Node 22 LTS, and a
+   shared TypeScript workspace baseline are now committed; frontend framework,
+   API runtime dependencies, infra libraries, and auth are still open.
 2. Scaffold the repo layout for app code, infrastructure, and local tooling.
+   Status: started. Workspace folders, package manifests, and placeholder
+   commands now exist, but the actual app/runtime scaffolds are not
+   implemented yet.
 3. Implement the catalog browse flows (`GET /folders`,
    `GET /folders/{folderId}/samples`, `GET /samples/{sampleId}`).
 4. Implement label submission with aggregate maintenance and access control for
@@ -53,4 +58,6 @@ Focus:
 
 ## Recently Completed
 
-None yet. This repo is still in its clean bootstrap state.
+- Added initial dependency-management and TypeScript bootstrap:
+  `pnpm` workspace, Node 22 pinning, shared `tsconfig` baseline, and
+  placeholder package scripts.

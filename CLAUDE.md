@@ -14,8 +14,8 @@ application for registered users. V1 should let users:
 - optionally request a suggested next unlabeled sample
 
 The architecture and data model are documented in the existing design files.
-This repository currently contains planning documents only, so always separate
-planned architecture from implemented state.
+This repository now contains planning documents plus a minimal workspace
+bootstrap. Always separate planned architecture from implemented state.
 
 ## Memory Files
 
@@ -32,6 +32,9 @@ planned architecture from implemented state.
 ## 2. Current Repository State
 
 - The repo is in a planning/specification phase.
+- The repo also contains a committed dependency-management and TypeScript
+  baseline: `pnpm` workspace files, Node version pins, and placeholder package
+  scripts.
 - The committed source of truth today is the design documentation, not app code.
 - No production application scaffold has been committed yet.
 - Changes should keep docs internally consistent and clearly mark what is
@@ -149,3 +152,16 @@ Expected local components from the current docs:
   `DECISIONS.md`.
 - If implementation starts, expand these docs to include real repo commands,
   layouts, and verification steps rather than leaving them conceptual.
+- When changing package manager, Node version, workspace layout, or TypeScript
+  conventions, update `CLAUDE.md`, `MEMORY.md`, `STATUS.md`, `PLANS.md`, and
+  `DECISIONS.md` together.
+
+## 9. Tooling Conventions
+
+- Use `pnpm` as the package manager unless a new ADR changes that choice.
+- Keep the repository pinned to Node 22 until a documented decision changes the
+  baseline.
+- Keep shared TypeScript tooling at the repository root and package-specific
+  runtime dependencies inside each workspace package.
+- Preserve the current workspace layout unless a new repo decision changes it:
+  `frontend/`, `api/`, `cdk/`, `scripts/`, `tests/`, and `local_media/`.

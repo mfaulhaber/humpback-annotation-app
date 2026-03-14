@@ -1,0 +1,6 @@
+packages:
+  - frontend
+  - api
+  - cdk
+  - scripts
+  - tests
