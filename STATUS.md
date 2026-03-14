@@ -6,7 +6,7 @@ Current state of the Humpback Annotation App repository.
 
 ## Phase
 
-Planning and architecture definition.
+Bootstrap and architecture definition.
 
 ## Implemented In This Repository
 
@@ -18,17 +18,23 @@ Planning and architecture definition.
 - DynamoDB query patterns in `dynamodb_query_cookbook.md`
 - repo coordination files: `AGENTS.md`, `CLAUDE.md`, `DECISIONS.md`,
   `MEMORY.md`, `PLANS.md`, and `STATUS.md`
+- `pnpm` workspace bootstrap covering `frontend/`, `api/`, `cdk/`,
+  `scripts/`, and `tests/`
+- Node 22 pinning via `.nvmrc` and `.node-version`
+- shared TypeScript baseline in `tsconfig.base.json`
+- placeholder package scripts for `dev`, `typecheck`, `build`, `test`,
+  `db:local:init`, `db:local:seed`, and `cdk:synth`
 
 ## Not Yet Implemented
 
 - frontend application code
 - backend/API handlers
 - infrastructure code
-- local bootstrap scripts
-- database/table creation scripts
-- seed data loader
+- working local bootstrap scripts
+- database/table creation logic
+- seed data loader implementation
 - authentication integration
-- tests and CI
+- real tests and CI
 - deployment pipeline
 
 ## Planned Capabilities
@@ -65,6 +71,9 @@ Use these docs as the current authoritative references:
 - `whale_annotation_local_development_stack.md`
 - `dynamodb_schema_design.md`
 - `dynamodb_query_cookbook.md`
+- `package.json`
+- `pnpm-workspace.yaml`
+- `tsconfig.base.json`
 
 ## Known Constraints and Guardrails
 
