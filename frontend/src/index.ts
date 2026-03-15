@@ -1,2 +1,1 @@
-export const frontendBootstrapStatus =
-  "Frontend framework selection is still pending.";
+export type { App } from "./App.js";

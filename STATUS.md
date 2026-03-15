@@ -6,82 +6,83 @@ Current state of the Humpback Annotation App repository.
 
 ## Phase
 
-Bootstrap and architecture definition.
+Local skeleton application — all 6 phases complete.
+
+## Quick Start
+
+```bash
+pnpm install
+pnpm dev --seed        # starts DynamoDB Local, API, and frontend
+# Open http://localhost:5173
+```
 
 ## Implemented In This Repository
 
-- V1 product and architecture spec in
-  `whale_annotation_v1_architecture_spec.md`
-- technical design pack in `technical_high_level_design_pack.md`
-- local development stack notes in `whale_annotation_local_development_stack.md`
-- DynamoDB schema notes in `dynamodb_schema_design.md`
-- DynamoDB query patterns in `dynamodb_query_cookbook.md`
-- repo coordination files: `AGENTS.md`, `CLAUDE.md`, `DECISIONS.md`,
-  `MEMORY.md`, `PLANS.md`, and `STATUS.md`
-- `pnpm` workspace bootstrap covering `frontend/`, `api/`, `cdk/`,
-  `scripts/`, and `tests/`
-- Node 22 pinning via `.nvmrc` and `.node-version`
-- shared TypeScript baseline in `tsconfig.base.json`
-- placeholder package scripts for `dev`, `typecheck`, `build`, `test`,
-  `db:local:init`, `db:local:seed`, and `cdk:synth`
+### Design & Coordination
+
+- V1 architecture spec, technical design pack, local dev stack notes
+- DynamoDB schema design and query cookbook
+- Coordination files: AGENTS.md, CLAUDE.md, DECISIONS.md, MEMORY.md, PLANS.md,
+  STATUS.md
+
+### Foundation (Phase 1)
+
+- pnpm workspace: `frontend/`, `api/`, `cdk/`, `scripts/`, `tests/`
+- Node 22 pinning, shared TypeScript baseline (`tsconfig.base.json`)
+- Shared types in `api/src/types/` (entities, API shapes, DynamoDB items,
+  12 label categories, key builders)
+- Config module (`api/src/config.ts`), DynamoDB client (`api/src/lib/dynamo-client.ts`)
+- Docker Compose for DynamoDB Local (`docker-compose.yml`)
+- Table creation script (`scripts/src/db-local-init.ts`) — Catalog + Labels with GSIs
+- Seed data script (`scripts/src/db-local-seed.ts`) — 3 folders, 65 samples, 10 labels
+- Placeholder media in `local_media/`
+
+### API (Phases 2-3)
+
+- Fastify server with local dev server (`api/src/server.ts`) and Lambda adapter
+  stub (`api/src/lambda.ts`)
+- Dev auth plugin (`api/src/plugins/auth.ts`) — reads `x-dev-user`/`x-dev-role` headers
+- Catalog routes: `GET /api/folders`, `GET /api/folders/:folderId/samples`,
+  `GET /api/samples/:sampleId`
+- Annotation route: `PUT /api/samples/:sampleId/label` — TransactWriteItems for
+  atomic label + aggregate updates
+- Suggest-next route: `GET /api/samples/suggest-next?folderId=`
+- Admin route: `GET /api/admin/labels` — role-enforced, multiple filter modes
+- `isLabeledByUser` per sample, `?filter=labeled|unlabeled|all` with over-scan pagination
+- Conditional aggregate visibility (only after user labels)
+- Media URL resolver, local static file serving at `/media/`
+- Health check at `/health` (no auth)
+
+### Frontend (Phases 4-5)
+
+- React 19 + Vite with dev proxy to API
+- Folder list, sample grid, sample detail pages
+- Audio player and spectrogram display
+- Label form with 12 categories, relabel support
+- Aggregate display with percentage bars (hidden until labeled)
+- Filter controls (all/labeled/unlabeled) on sample list
+- Suggest-next button navigates to unlabeled sample
+- Dev user picker in header (dev_user_1, dev_user_2, admin_user)
+
+### Developer Experience (Phase 6)
+
+- Unified `pnpm dev` — starts DynamoDB Local, inits tables, launches API + frontend
+- Vitest integration tests (`tests/src/api-integration.test.ts`)
+- `.env.local.example` with documented defaults
 
 ## Not Yet Implemented
 
-- frontend application code
-- backend/API handlers
-- infrastructure code
-- working local bootstrap scripts
-- database/table creation logic
-- seed data loader implementation
-- authentication integration
-- real tests and CI
-- deployment pipeline
-
-## Planned Capabilities
-
-### User-facing V1
-
-- browse whale vocalization samples by folder
-- preview short audio clips
-- view pre-rendered spectrogram images
-- submit and update one label per sample per user
-- filter labeled versus unlabeled samples
-- request a suggested next unlabeled sample
-- reveal aggregate percentages after the current user labels a sample
-
-### Admin V1
-
-- inspect labels by user, sample, folder, category, and date range
-- export reporting data
-
-### Platform V1
-
-- CDN-served static web app and media
-- authenticated API for catalog, annotation, suggestion, and reporting
-- DynamoDB-backed catalog and labels data model
-- local development using DynamoDB Local, local media, and local API emulation
-- cloud deployment via infrastructure-as-code
-
-## Current Source of Truth
-
-Use these docs as the current authoritative references:
-
-- `whale_annotation_v1_architecture_spec.md`
-- `technical_high_level_design_pack.md`
-- `whale_annotation_local_development_stack.md`
-- `dynamodb_schema_design.md`
-- `dynamodb_query_cookbook.md`
-- `package.json`
-- `pnpm-workspace.yaml`
-- `tsconfig.base.json`
+- Infrastructure code (CDK stacks — separate plan)
+- Authentication integration (Cognito — separate plan)
+- Deployment pipeline (separate plan)
+- CI configuration
+- Export reporting in admin UI
 
 ## Known Constraints and Guardrails
 
-- optimize for low idle cost first
-- keep west-coast user experience roughly in the 500-1000 ms range
-- media files are public assets, not proxied through application compute
+- Optimize for low idle cost first
+- Media files are public assets, not proxied through application compute
 - V1 uses pre-rendered spectrogram images
-- no relational database dependency is planned for V1
-- local development should avoid a heavyweight fake-AWS environment
-- aggregate percentages stay hidden until a user labels the sample
-- one current label per sample per user remains a core product rule
+- No relational database dependency planned for V1
+- Aggregate percentages stay hidden until a user labels the sample
+- One current label per sample per user remains a core product rule

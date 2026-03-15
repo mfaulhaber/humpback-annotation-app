@@ -6,6 +6,9 @@
   "scripts": {
     "typecheck": "tsc --project tsconfig.json --pretty false",
     "build": "pnpm run typecheck",
-    "test": "tsx src/smoke.ts"
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
   }
 }

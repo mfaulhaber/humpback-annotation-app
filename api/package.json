@@ -3,10 +3,22 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "dev": "node -e \"console.log('API handlers are not scaffolded yet. Add the first Lambda entrypoints next.')\"",
+    "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --project tsconfig.json --pretty false",
     "build": "pnpm run typecheck",
     "test": "node -e \"console.log('No API tests are configured yet.')\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1009.0",
+    "@aws-sdk/lib-dynamodb": "^3.1009.0",
+    "@fastify/aws-lambda": "^6.4.0",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/static": "^9.0.0",
+    "fastify": "^5.8.2",
+    "fastify-plugin": "^5.1.0"
   }
 }

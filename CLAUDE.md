@@ -31,12 +31,12 @@ bootstrap. Always separate planned architecture from implemented state.
 
 ## 2. Current Repository State
 
-- The repo is in a planning/specification phase.
-- The repo also contains a committed dependency-management and TypeScript
-  baseline: `pnpm` workspace files, Node version pins, and placeholder package
-  scripts.
-- The committed source of truth today is the design documentation, not app code.
-- No production application scaffold has been committed yet.
+- The local skeleton application is fully implemented (Phases 1-6 complete).
+- Stack: Fastify (API), React 19 + Vite (frontend), DynamoDB Local via Docker.
+- The API runs locally via `tsx watch` and has a Lambda adapter stub for future
+  AWS deployment.
+- Quick start: `pnpm install && pnpm dev --seed` then open `http://localhost:5173`.
+- AWS deployment (CDK stacks, Cognito, CI/CD) is not yet implemented.
 - Changes should keep docs internally consistent and clearly mark what is
   planned versus what is already built.
 

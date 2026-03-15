@@ -4,30 +4,7 @@
 
 ## Active
 
-# Plan: Bootstrap the V1 Application From the Design Docs
-
-Goal:
-
-- turn the current architecture/specification set into an initial working repo
-  scaffold without losing the low-cost serverless shape
-
-Suggested milestones:
-
-1. Choose and document the concrete implementation stack for frontend, API,
-   infrastructure, and auth. Status: in progress. `pnpm`, Node 22 LTS, and a
-   shared TypeScript workspace baseline are now committed; frontend framework,
-   API runtime dependencies, infra libraries, and auth are still open.
-2. Scaffold the repo layout for app code, infrastructure, and local tooling.
-   Status: started. Workspace folders, package manifests, and placeholder
-   commands now exist, but the actual app/runtime scaffolds are not
-   implemented yet.
-3. Implement the catalog browse flows (`GET /folders`,
-   `GET /folders/{folderId}/samples`, `GET /samples/{sampleId}`).
-4. Implement label submission with aggregate maintenance and access control for
-   post-label aggregate visibility.
-5. Add local bootstrap tooling for DynamoDB tables, seed data, and media
-   mounting.
-6. Add admin reporting and suggest-next flows.
+No active plan. See backlog for next priorities.
 
 ## Backlog
 
@@ -35,28 +12,35 @@ Suggested milestones:
 
 Focus:
 
-- lock down the cloud deployment path
-- codify environment configuration
+- CDK stacks for API Gateway, Lambda, DynamoDB, S3, CloudFront
+- SAM CLI integration for local API testing with CDK synth output
+- environment configuration (dev, staging, prod)
 - confirm local-to-cloud parity expectations
 
-# Plan: Formalize API Contracts
+# Plan: Authentication Integration
 
 Focus:
 
-- define request/response schemas for browse, label, suggest-next, and admin
-  reporting
-- clarify pagination and filtering behavior
-- document auth and role enforcement
+- AWS Cognito user pool and identity pool
+- API Gateway authorizers
+- replace dev auth headers with JWT validation in production
+- user registration and sign-in flow in frontend
 
-# Plan: Seed Data and Developer Experience
+# Plan: CI/CD Pipeline
 
 Focus:
 
-- local table creation
-- seed dataset for UI work
-- fast local start-up workflow
+- GitHub Actions for typecheck, test, build
+- automated deployment to AWS
+- environment promotion strategy
 
 ## Recently Completed
+
+- Local Skeleton Application (Phases 1-6):
+  Detailed plan: `~/.claude/plans/quirky-drifting-pizza.md`
+  Stack: Fastify (API), React + Vite (frontend), DynamoDB Local via Docker
+  Compose. All code structured for future Lambda deployment. Includes unified
+  `pnpm dev` startup, Vitest integration tests, and full documentation updates.
 
 - Added initial dependency-management and TypeScript bootstrap:
   `pnpm` workspace, Node 22 pinning, shared `tsconfig` baseline, and

@@ -4,9 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node -e \"console.log('Frontend scaffolding is not implemented yet. Choose the V1 UI framework next.')\"",
+    "dev": "vite",
     "typecheck": "tsc --project tsconfig.json --pretty false",
-    "build": "pnpm run typecheck",
+    "build": "vite build",
     "test": "node -e \"console.log('No frontend tests are configured yet.')\""
+  },
+  "dependencies": {
+    "@humpback/api": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.0"
   }
 }

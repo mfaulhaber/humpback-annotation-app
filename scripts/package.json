@@ -10,5 +10,10 @@
     "test": "node -e \"console.log('No script package tests are configured yet.')\"",
     "db:local:init": "tsx src/db-local-init.ts",
     "db:local:seed": "tsx src/db-local-seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1009.0",
+    "@aws-sdk/lib-dynamodb": "^3.1009.0",
+    "@humpback/api": "workspace:*"
   }
 }

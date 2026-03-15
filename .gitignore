@@ -9,5 +9,6 @@ cdk.out
 .aws-sam
 .env
 .env.*
+!.env.*.example
 local_media/*
 !local_media/.gitkeep

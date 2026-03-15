@@ -47,6 +47,19 @@ Example:
 
 ------------------------------------------------------------------------
 
+## GSI1: Folders by Entity Type
+
+GSI1PK = gsi1pk (entity type, e.g. `"Folder"`)\
+GSI1SK = gsi1sk (e.g. `FOLDER#{folder_id}`)
+
+Allows:
+
+-   listing all folders efficiently via query instead of scan
+
+Folder items include `gsi1pk: "Folder"` and `gsi1sk: "FOLDER#{folder_id}"`.
+
+------------------------------------------------------------------------
+
 ## Item Type: Sample Reference (for browsing)
 
 PK = FOLDER#{folder_id}\
