@@ -35,6 +35,8 @@ pnpm dev --seed        # starts DynamoDB Local, API, and frontend
 - Docker Compose for DynamoDB Local (`docker-compose.yml`)
 - Table creation script (`scripts/src/db-local-init.ts`) — Catalog + Labels with GSIs
 - Seed data script (`scripts/src/db-local-seed.ts`) — 3 folders, 65 samples, 10 labels
+- Data ingestion script (`scripts/src/db-ingest.ts`) — ingests real whale data
+  from `[root]/positives/humpback/[dataset]/YYYY/MM/DD/` folder structure
 - Placeholder media in `local_media/`
 
 ### API (Phases 2-3)
@@ -57,7 +59,7 @@ pnpm dev --seed        # starts DynamoDB Local, API, and frontend
 
 - React 19 + Vite with dev proxy to API
 - Folder list, sample grid, sample detail pages
-- Audio player and spectrogram display
+- Audio player and spectrogram display (with placeholder for missing spectrograms)
 - Label form with 12 categories, relabel support
 - Aggregate display with percentage bars (hidden until labeled)
 - Filter controls (all/labeled/unlabeled) on sample list
@@ -84,7 +86,7 @@ pnpm dev --seed        # starts DynamoDB Local, API, and frontend
 
 - Optimize for low idle cost first
 - Media files are public assets, not proxied through application compute
-- V1 uses pre-rendered spectrogram images
+- V1 uses pre-rendered spectrogram images (nullable — some samples may lack spectrograms)
 - No relational database dependency planned for V1
 - Aggregate percentages stay hidden until a user labels the sample
 - One current label per sample per user remains a core product rule

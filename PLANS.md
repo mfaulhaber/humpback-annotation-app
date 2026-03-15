@@ -4,7 +4,15 @@
 
 ## Active
 
-No active plan. See backlog for next priorities.
+# Plan: Adapt App for Real Whale Data Structure
+
+Detailed plan: `~/.claude/plans/virtual-roaming-peach.md`
+
+Focus:
+- Make spectrogramKey nullable across types, API, and frontend
+- Create data ingestion script for real folder structure (`[root]/positives/humpback/[dataset]/YYYY/MM/DD/`)
+- Support co-located audio + PNG files with timestamp-based filenames
+- Add `db:ingest` script with --dry-run, --all, --path flags
 
 ## Backlog
 

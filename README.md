@@ -15,7 +15,7 @@ a user submits their own label.
   ([Docker Desktop](https://www.docker.com/products/docker-desktop/),
   [OrbStack](https://orbstack.dev/), or similar)
 
-## Quick Start
+## Quick Start (Seed Data)
 
 ```bash
 git clone <repo-url> && cd humpback-annotation-app
@@ -23,15 +23,38 @@ pnpm install
 pnpm dev --seed
 ```
 
-This single command will:
+This starts the full stack with synthetic test data (3 folders, 65 samples).
+Open **http://localhost:6173** in your browser.
 
-1. Start DynamoDB Local via Docker Compose (port 8000)
-2. Create the Catalog and Labels tables
-3. Load seed data (3 folders, 65 samples, 10 labels)
-4. Start the API server on `http://localhost:3001`
-5. Start the frontend dev server on `http://localhost:5173`
+## Quick Start (Real Data)
 
-Open **http://localhost:5173** in your browser.
+To run against real whale recordings:
+
+```bash
+pnpm install
+MEDIA_ROOT=/path/to/data/root pnpm dev --ingest /path/to/data/root/positives/humpback
+```
+
+This ingests all dataset folders found under the given path and serves audio
+and spectrograms from `MEDIA_ROOT`. The expected folder structure is:
+
+```
+<MEDIA_ROOT>/
+  positives/
+    humpback/
+      <dataset_name>/          # e.g. noaa_glacier_bay
+        YYYY/MM/DD/
+          <start>Z_<end>Z.flac # audio (.flac, .wav, or .mp3)
+          <start>Z_<end>Z.png  # spectrogram (optional)
+```
+
+To ingest a single dataset instead of all subdirectories:
+
+```bash
+pnpm db:ingest -- --path /path/to/positives/humpback/noaa_glacier_bay
+```
+
+Use `--dry-run` to preview what would be written without touching DynamoDB.
 
 ## Manual Setup
 
@@ -47,10 +70,14 @@ docker compose up -d
 # 3. Create tables (idempotent)
 pnpm db:local:init
 
-# 4. Load seed data
+# 4a. Load seed data
 pnpm db:local:seed
 
+# 4b. Or ingest real data (instead of seed)
+pnpm db:ingest -- --path /path/to/positives/humpback/noaa_glacier_bay
+
 # 5. Start API server (watches for changes)
+# Set MEDIA_ROOT if using real data
 pnpm --filter @humpback/api dev
 
 # 6. In another terminal — start frontend (watches for changes)
@@ -61,13 +88,17 @@ pnpm --filter @humpback/frontend dev
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start full local stack (add `--seed` to load seed data) |
-| `pnpm dev --seed` | Start full local stack with seed data |
+| `pnpm dev` | Start full local stack (empty DB) |
+| `pnpm dev --seed` | Start full local stack with synthetic seed data |
+| `MEDIA_ROOT=... pnpm dev --ingest <path>` | Start stack and ingest real data from `<path>` |
 | `pnpm typecheck` | Run TypeScript checks across all packages |
 | `pnpm build` | Build all packages |
 | `pnpm test` | Run tests (requires local stack running) |
 | `pnpm db:local:init` | Create DynamoDB tables (idempotent) |
 | `pnpm db:local:seed` | Load seed data into DynamoDB Local |
+| `pnpm db:ingest -- --path <dir>` | Ingest a single dataset directory |
+| `pnpm db:ingest -- --path <dir> --all` | Ingest all dataset subdirectories |
+| `pnpm db:ingest -- --path <dir> --dry-run` | Preview ingestion without writing |
 | `pnpm --filter @humpback/api dev` | Start API server only |
 | `pnpm --filter @humpback/frontend dev` | Start frontend only |
 
@@ -106,10 +137,12 @@ out of the box:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_ENV` | `local` | Environment mode |
-| `DYNAMODB_ENDPOINT` | `http://localhost:8000` | DynamoDB endpoint |
+| `DYNAMODB_PORT` | `9000` | DynamoDB Local port |
+| `DYNAMODB_ENDPOINT` | `http://localhost:9000` | DynamoDB endpoint |
 | `CATALOG_TABLE` | `Catalog` | Catalog table name |
 | `LABELS_TABLE` | `Labels` | Labels table name |
-| `MEDIA_ROOT` | `./local_media` | Local media file directory |
+| `MEDIA_ROOT` | `./local_media` | Media root directory (set to data root for real data) |
+| `FRONTEND_PORT` | `6173` | Frontend dev server port |
 | `AUTH_MODE` | `dev` | Auth mode (`dev` or `cognito`) |
 | `AWS_REGION` | `us-west-2` | AWS region |
 | `API_PORT` | `3001` | API server port |

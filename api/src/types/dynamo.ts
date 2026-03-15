@@ -22,7 +22,7 @@ export interface SampleRefItem {
   sample_id: string;
   captured_at: string;
   audio_key: string;
-  spectrogram_key: string;
+  spectrogram_key: string | null;
   duration_sec: number;
   is_active: boolean;
 }
@@ -36,7 +36,7 @@ export interface SampleDetailItem {
   source_recording_id: string;
   captured_at: string;
   audio_key: string;
-  spectrogram_key: string;
+  spectrogram_key: string | null;
   duration_sec: number;
   is_active: boolean;
 }

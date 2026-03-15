@@ -9,7 +9,8 @@
     "build": "pnpm run typecheck",
     "test": "node -e \"console.log('No script package tests are configured yet.')\"",
     "db:local:init": "tsx src/db-local-init.ts",
-    "db:local:seed": "tsx src/db-local-seed.ts"
+    "db:local:seed": "tsx src/db-local-seed.ts",
+    "db:ingest": "tsx src/db-ingest.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1009.0",

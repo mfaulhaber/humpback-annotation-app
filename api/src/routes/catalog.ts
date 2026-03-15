@@ -194,7 +194,9 @@ export default async function catalogRoutes(
         durationSec: item.duration_sec,
         isActive: item.is_active,
         audioUrl: resolveMediaUrl(config, item.audio_key),
-        spectrogramUrl: resolveMediaUrl(config, item.spectrogram_key),
+        spectrogramUrl: item.spectrogram_key
+          ? resolveMediaUrl(config, item.spectrogram_key)
+          : null,
       },
     };
 
