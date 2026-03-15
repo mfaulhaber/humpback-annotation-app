@@ -20,9 +20,9 @@ description: Checklist for structured root-cause debugging for issues.
 
 5. **Add regression test** — a test that fails without the fix and passes with it
 
-6. **Run full test suite**: `uv run pytest tests/`
+6. **Run full test suite**: `pnpm test`
 
 ## Rules
 - Don't apply workarounds — fix root causes
-- If the fix changes signal processing or data models, it needs an ADR
+- If the fix changes data model, annotation semantics, or aggregate count logic, it needs an ADR
 - Update STATUS.md if the fix changes known constraints
