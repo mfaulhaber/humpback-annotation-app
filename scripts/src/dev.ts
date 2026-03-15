@@ -86,11 +86,17 @@ async function main() {
   // 2. Initialize tables (idempotent)
   runSync("pnpm db:local:init", "db:local:init");
 
-  // 3. Seed data (idempotent — will write over existing data)
-  if (process.argv.includes("--seed") || process.argv.includes("--force")) {
+  // 3. Seed or ingest data
+  const doSeed = process.argv.includes("--seed") || process.argv.includes("--force");
+  const ingestIdx = process.argv.indexOf("--ingest");
+  const ingestPath = ingestIdx !== -1 ? process.argv[ingestIdx + 1] : undefined;
+
+  if (doSeed) {
     runSync("pnpm db:local:seed", "db:local:seed");
+  } else if (ingestPath) {
+    runSync(`pnpm db:ingest -- --path "${ingestPath}" --all`, "db:ingest");
   } else {
-    log("Skipping seed (pass --seed to re-seed).");
+    log("Skipping seed (pass --seed to re-seed or --ingest <path> to ingest real data).");
   }
 
   // 4. Start API and frontend concurrently

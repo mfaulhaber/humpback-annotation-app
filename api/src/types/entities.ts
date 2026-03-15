@@ -13,7 +13,7 @@ export interface SampleRef {
   folderId: string;
   capturedAt: string;
   audioKey: string;
-  spectrogramKey: string;
+  spectrogramKey: string | null;
   durationSec: number;
   isActive: boolean;
 }

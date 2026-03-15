@@ -16,6 +16,7 @@
     "test": "pnpm -r --if-present run test",
     "db:local:init": "pnpm --filter @humpback/scripts run db:local:init",
     "db:local:seed": "pnpm --filter @humpback/scripts run db:local:seed",
+    "db:ingest": "pnpm --filter @humpback/scripts run db:ingest",
     "cdk:synth": "pnpm --filter @humpback/cdk run synth"
   },
   "devDependencies": {

@@ -51,21 +51,37 @@ export function SampleDetailPage() {
       <h1 style={{ marginTop: 8, marginBottom: 16 }}>{sample.sampleId}</h1>
 
       {/* Spectrogram */}
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 8,
-          overflow: "hidden",
-          border: "1px solid #e0e0e0",
-          marginBottom: 16,
-        }}
-      >
-        <img
-          src={sample.spectrogramUrl}
-          alt="spectrogram"
-          style={{ width: "100%", display: "block" }}
-        />
-      </div>
+      {sample.spectrogramUrl ? (
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 8,
+            overflow: "hidden",
+            border: "1px solid #e0e0e0",
+            marginBottom: 16,
+          }}
+        >
+          <img
+            src={sample.spectrogramUrl}
+            alt="spectrogram"
+            style={{ width: "100%", display: "block" }}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            background: "#f5f5f5",
+            borderRadius: 8,
+            padding: 32,
+            textAlign: "center",
+            border: "1px dashed #ccc",
+            marginBottom: 16,
+            color: "#999",
+          }}
+        >
+          No spectrogram available for this sample.
+        </div>
+      )}
 
       {/* Audio player */}
       <div

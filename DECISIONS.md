@@ -114,6 +114,34 @@ server at `localhost:3001`, avoiding CORS issues locally.
 - The production build is a static bundle that can be deployed to S3/CloudFront.
 - React Router handles client-side routing with three routes.
 
+## ADR-006: Real Whale Data Ingestion With Co-Located Media and Nullable Spectrograms
+
+**Date**: 2026-03-15
+**Status**: Accepted
+
+**Context**: Real whale data follows a hierarchical folder structure
+(`[root]/positives/humpback/[dataset_name]/YYYY/MM/DD/`) with audio files
+(`.flac`, `.wav`, `.mp3`) and spectrogram PNGs co-located in the same day
+directory. The existing model assumed separate `samples/` and `spectrograms/`
+media trees and required spectrograms on all samples. Many real samples lack
+pre-rendered spectrograms.
+
+**Decision**: Make `spectrogramKey` / `spectrogram_key` nullable throughout the
+stack (types, DynamoDB items, API responses, frontend). Add a data ingestion
+script (`scripts/src/db-ingest.ts`) that discovers audio/PNG pairs from the
+enforced folder structure, parses ISO 8601 timestamps from filenames to derive
+`capturedAt` and `durationSec`, and writes Folder + Sample items to the Catalog
+table. `MEDIA_ROOT` env var points to the data root so media keys are full
+relative paths (e.g., `positives/humpback/noaa_glacier_bay/2015/08/07/file.flac`).
+Sample IDs are `{dataset_name}_{filename_stem}` for global uniqueness.
+
+**Consequences**:
+- Frontend gracefully renders a placeholder when spectrogramUrl is null
+- The seed script is preserved as-is for testing; ingestion is a separate path
+- No DynamoDB table schema changes — only item content shapes changed
+- `MEDIA_ROOT` must point to the data root when using real data
+- The `--all` flag ingests multiple datasets under a parent directory
+
 ---
 
 Use this template for future decisions:

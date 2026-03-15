@@ -157,11 +157,28 @@ export function SampleListPage() {
                 border: "1px solid #e0e0e0",
               }}
             >
-              <img
-                src={`/media/${s.spectrogramKey}`}
-                alt="spectrogram"
-                style={{ width: "100%", height: 100, objectFit: "cover" }}
-              />
+              {s.spectrogramKey ? (
+                <img
+                  src={`/media/${s.spectrogramKey}`}
+                  alt="spectrogram"
+                  style={{ width: "100%", height: 100, objectFit: "cover" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: 100,
+                    background: "#e8e8e8",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#999",
+                    fontSize: 12,
+                  }}
+                >
+                  No spectrogram
+                </div>
+              )}
               <div style={{ padding: 8 }}>
                 <div
                   style={{

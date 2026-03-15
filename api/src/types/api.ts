@@ -16,7 +16,7 @@ export interface ListSamplesResponse {
 export interface GetSampleResponse {
   sample: Sample & {
     audioUrl: string;
-    spectrogramUrl: string;
+    spectrogramUrl: string | null;
   };
   userLabel?: LabelCategory;
   aggregate?: {

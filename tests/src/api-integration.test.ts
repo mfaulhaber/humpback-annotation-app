@@ -102,7 +102,10 @@ describe("GET /api/samples/:sampleId", () => {
     };
     expect(data.sample.sampleId).toBe(sampleId);
     expect(data.sample.audioUrl).toBeDefined();
-    expect(data.sample.spectrogramUrl).toBeDefined();
+    expect(
+      data.sample.spectrogramUrl === null ||
+        typeof data.sample.spectrogramUrl === "string",
+    ).toBe(true);
     // New test user hasn't labeled — no aggregate
     expect(data.userLabel).toBeUndefined();
     expect(data.aggregate).toBeUndefined();
