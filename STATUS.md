@@ -13,7 +13,7 @@ Local skeleton application — all 6 phases complete.
 ```bash
 pnpm install
 pnpm dev --seed        # starts DynamoDB Local, API, and frontend
-# Open http://localhost:5173
+# Open http://localhost:6173
 ```
 
 ## Implemented In This Repository
@@ -69,6 +69,8 @@ pnpm dev --seed        # starts DynamoDB Local, API, and frontend
 - Unified `pnpm dev` — starts DynamoDB Local, inits tables, launches API + frontend
 - Vitest integration tests (`tests/src/api-integration.test.ts`)
 - `.env.local.example` with documented defaults
+- Configurable ports via env vars: `DYNAMODB_PORT` (default 9000),
+  `API_PORT` (default 3001), `FRONTEND_PORT` (default 6173)
 
 ## Not Yet Implemented
 

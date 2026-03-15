@@ -6,7 +6,9 @@ import {
   waitUntilTableExists,
 } from "@aws-sdk/client-dynamodb";
 
-const endpoint = process.env["DYNAMODB_ENDPOINT"] ?? "http://localhost:8000";
+const endpoint =
+  process.env["DYNAMODB_ENDPOINT"] ??
+  `http://localhost:${process.env["DYNAMODB_PORT"] ?? "9000"}`;
 const region = process.env["AWS_REGION"] ?? "us-west-2";
 const catalogTable = process.env["CATALOG_TABLE"] ?? "Catalog";
 const labelsTable = process.env["LABELS_TABLE"] ?? "Labels";

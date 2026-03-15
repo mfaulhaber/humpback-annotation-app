@@ -36,6 +36,11 @@ Focus:
 
 ## Recently Completed
 
+- Add Environment Variables for Configurable Ports:
+  Detailed plan: `~/.claude/plans/nested-crafting-fox.md`
+  Added `DYNAMODB_PORT` (default 9000), `FRONTEND_PORT` (default 6173) env vars.
+  `API_PORT` already existed (default 3001). Updated 8 files.
+
 - Local Skeleton Application (Phases 1-6):
   Detailed plan: `~/.claude/plans/quirky-drifting-pizza.md`
   Stack: Fastify (API), React + Vite (frontend), DynamoDB Local via Docker

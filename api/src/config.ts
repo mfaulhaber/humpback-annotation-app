@@ -15,7 +15,9 @@ export function loadConfig(): Config {
     appEnv,
     dynamoEndpoint:
       process.env["DYNAMODB_ENDPOINT"] ??
-      (appEnv === "local" ? "http://localhost:8000" : undefined),
+      (appEnv === "local"
+        ? `http://localhost:${process.env["DYNAMODB_PORT"] ?? "9000"}`
+        : undefined),
     catalogTable: process.env["CATALOG_TABLE"] ?? "Catalog",
     labelsTable: process.env["LABELS_TABLE"] ?? "Labels",
     mediaRoot: process.env["MEDIA_ROOT"] ?? "./local_media",

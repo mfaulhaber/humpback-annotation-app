@@ -35,7 +35,7 @@ bootstrap. Always separate planned architecture from implemented state.
 - Stack: Fastify (API), React 19 + Vite (frontend), DynamoDB Local via Docker.
 - The API runs locally via `tsx watch` and has a Lambda adapter stub for future
   AWS deployment.
-- Quick start: `pnpm install && pnpm dev --seed` then open `http://localhost:5173`.
+- Quick start: `pnpm install && pnpm dev --seed` then open `http://localhost:6173`.
 - AWS deployment (CDK stacks, Cognito, CI/CD) is not yet implemented.
 - Changes should keep docs internally consistent and clearly mark what is
   planned versus what is already built.

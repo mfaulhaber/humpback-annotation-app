@@ -1,8 +1,10 @@
 import { execSync, spawn } from "node:child_process";
 
 const API_PORT = process.env["API_PORT"] ?? "3001";
+const DYNAMODB_PORT = process.env["DYNAMODB_PORT"] ?? "9000";
 const DYNAMO_ENDPOINT =
-  process.env["DYNAMODB_ENDPOINT"] ?? "http://localhost:8000";
+  process.env["DYNAMODB_ENDPOINT"] ?? `http://localhost:${DYNAMODB_PORT}`;
+const FRONTEND_PORT = process.env["FRONTEND_PORT"] ?? "6173";
 
 function log(msg: string) {
   console.log(`[dev] ${msg}`);
@@ -10,7 +12,7 @@ function log(msg: string) {
 
 function isDynamoReachable(): boolean {
   try {
-    execSync(`curl -sf ${DYNAMO_ENDPOINT} -o /dev/null 2>/dev/null`, {
+    execSync(`curl -s -o /dev/null -w "" ${DYNAMO_ENDPOINT} 2>/dev/null`, {
       stdio: "ignore",
       timeout: 3000,
     });
@@ -95,7 +97,7 @@ async function main() {
   log(`Starting API server on port ${API_PORT}...`);
   const api = startProcess("pnpm", ["--filter", "@humpback/api", "dev"], "API");
 
-  log("Starting frontend dev server...");
+  log(`Starting frontend dev server on port ${FRONTEND_PORT}...`);
   const frontend = startProcess(
     "pnpm",
     ["--filter", "@humpback/frontend", "dev"],
@@ -107,6 +109,7 @@ async function main() {
     log("Shutting down...");
     api.kill();
     frontend.kill();
+    runSync("docker compose down", "docker compose down");
     process.exit(0);
   }
 
