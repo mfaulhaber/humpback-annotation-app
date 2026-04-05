@@ -1,1 +1,1 @@
-Read and execute the workflow defined in .agents/skills/session-start/SKILL.md
+Legacy alias for session-begin. Read and execute the workflow defined in docs/workflows/session-begin.md

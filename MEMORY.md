@@ -11,8 +11,11 @@ repo conventions, see `CLAUDE.md`.
 - Domain: whale vocalization sample browsing and labeling
 - Primary user flows: browse, preview, label, reveal aggregate after labeling,
   suggest next unlabeled sample, admin reporting
-- Current repo state: design docs plus a committed workspace/bootstrap
-  foundation; product runtime code is not implemented yet
+- Current repo state: local skeleton application implemented across
+  `frontend/`, `api/`, `scripts/`, and `tests/`; production auth, deployment,
+  and CI/CD remain planned
+- Session workflow guidance now lives in `docs/workflows/` with matching
+  `.claude/commands/` entrypoints and repo-local plan files in `docs/plans/`
 
 ## Current Repository Layout
 
@@ -20,6 +23,7 @@ repo conventions, see `CLAUDE.md`.
 humpback-annotation-app/
 ├── AGENTS.md
 ├── CLAUDE.md
+├── README.md
 ├── DECISIONS.md
 ├── MEMORY.md
 ├── PLANS.md
@@ -27,8 +31,14 @@ humpback-annotation-app/
 ├── package.json
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
-├── .nvmrc
-├── .node-version
+├── .claude/
+│   └── commands/
+├── .agents/
+│   └── skills/
+├── docs/
+│   ├── plans/
+│   ├── specs/
+│   └── workflows/
 ├── frontend/
 ├── api/
 ├── cdk/
@@ -222,21 +232,24 @@ Possible selection policies:
 
 ## Local Development Reference
 
-Expected local stack from the current design docs:
+Current local stack:
 
-- frontend dev server
-- local API emulation
-- DynamoDB Local
-- local media folder
-- infrastructure synthesized from CDK templates
+- React + Vite frontend dev server
+- Fastify API dev server
+- DynamoDB Local via Docker Compose
+- local media folder or external `MEDIA_ROOT`
+- scripts for table init, seed data, and real-data ingest
+- dev-auth headers plus the frontend user picker for local user simulation
 
 Representative local environment variables:
 
 - `APP_ENV=local`
-- `DYNAMODB_ENDPOINT=http://localhost:8000`
+- `DYNAMODB_ENDPOINT=http://localhost:9000`
 - `CATALOG_TABLE=Catalog`
 - `LABELS_TABLE=Labels`
 - `MEDIA_ROOT=./local_media`
+- `API_PORT=3001`
+- `FRONTEND_PORT=6173`
 - `AUTH_MODE=dev`
 - `AWS_REGION=us-west-2`
 
@@ -254,26 +267,33 @@ Representative local auth headers:
 - Shared TypeScript tooling at repo root:
   `typescript@5.9.3`, `tsx@4.21.0`, `@types/node@22.19.15`
 - Workspace packages:
-  - `frontend` for the future web app
-  - `api` for future Lambda/API handlers
-  - `cdk` for future infrastructure code
-  - `scripts` for local bootstrap helpers
-  - `tests` for future repo-level test code
+  - `frontend` for the React + Vite app
+  - `api` for the Fastify API and Lambda adapter stub
+  - `cdk` for infrastructure stubs and future deployment code
+  - `scripts` for local orchestration, bootstrap, and ingest helpers
+  - `tests` for Vitest integration coverage
 
 Bootstrap commands available today:
 
 - `pnpm install`
 - `pnpm dev`
+- `pnpm dev --seed`
 - `pnpm typecheck`
 - `pnpm build`
 - `pnpm test`
 - `pnpm db:local:init`
 - `pnpm db:local:seed`
+- `pnpm db:ingest -- --path <dir>`
 - `pnpm cdk:synth`
 
 Current command behavior:
 
-- `pnpm typecheck`, `pnpm build`, and `pnpm test` run against the placeholder
-  workspace packages and should pass
-- `pnpm db:local:init`, `pnpm db:local:seed`, and `pnpm cdk:synth` are
-  scaffolded placeholders that explain the next implementation step
+- `pnpm dev` orchestrates DynamoDB Local, table initialization, and the local
+  API + frontend dev servers
+- `pnpm typecheck` and `pnpm build` run across the workspace packages
+- `pnpm test` runs the Vitest integration suite and expects the local stack to
+  be available
+- `pnpm db:local:init` and `pnpm db:local:seed` create and populate local
+  DynamoDB tables
+- `pnpm db:ingest` imports real dataset folders into the Catalog table
+- `pnpm cdk:synth` synthesizes the current CDK stubs
