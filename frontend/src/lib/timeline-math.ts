@@ -49,39 +49,14 @@ export function getViewportRange(
   zoom: ZoomLevel,
   centerTimestamp: number,
 ): TimeRange {
-  const startBound = manifest.job.start_timestamp;
-  const endBound = manifest.job.end_timestamp;
-  const jobSpan = endBound - startBound;
   const requestedSpan = VIEWPORT_SPANS[zoom];
-
-  if (jobSpan <= requestedSpan) {
-    return {
-      start: startBound,
-      end: endBound,
-      span: Math.max(jobSpan, 1),
-    };
-  }
-
   const clampedCenter = clampTimestamp(manifest, centerTimestamp);
   const halfSpan = requestedSpan / 2;
 
-  let start = clampedCenter - halfSpan;
-  let end = clampedCenter + halfSpan;
-
-  if (start < startBound) {
-    start = startBound;
-    end = start + requestedSpan;
-  }
-
-  if (end > endBound) {
-    end = endBound;
-    start = end - requestedSpan;
-  }
-
   return {
-    start,
-    end,
-    span: end - start,
+    start: clampedCenter - halfSpan,
+    end: clampedCenter + halfSpan,
+    span: requestedSpan,
   };
 }
 

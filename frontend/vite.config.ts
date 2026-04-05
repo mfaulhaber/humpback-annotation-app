@@ -28,6 +28,64 @@ function contentTypeFor(filePath: string): string {
   }
 }
 
+export interface ByteRange {
+  start: number;
+  end: number;
+}
+
+export function parseByteRange(
+  headerValue: string | undefined,
+  fileSize: number,
+): ByteRange | null {
+  if (!headerValue) {
+    return null;
+  }
+
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(headerValue.trim());
+  if (!match) {
+    return null;
+  }
+
+  const rawStart = match[1] ?? "";
+  const rawEnd = match[2] ?? "";
+
+  if (rawStart === "" && rawEnd === "") {
+    return null;
+  }
+
+  if (rawStart === "") {
+    const suffixLength = Number.parseInt(rawEnd, 10);
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) {
+      return null;
+    }
+
+    const start = Math.max(fileSize - suffixLength, 0);
+    return {
+      start,
+      end: fileSize - 1,
+    };
+  }
+
+  const start = Number.parseInt(rawStart, 10);
+  const requestedEnd =
+    rawEnd === "" ? fileSize - 1 : Number.parseInt(rawEnd, 10);
+
+  if (
+    !Number.isFinite(start) ||
+    !Number.isFinite(requestedEnd) ||
+    start < 0 ||
+    requestedEnd < start ||
+    start >= fileSize
+  ) {
+    return null;
+  }
+
+  return {
+    start,
+    end: Math.min(requestedEnd, fileSize - 1),
+  };
+}
+
 function timelineExportPlugin(timelineExportRoot: string | undefined) {
   const resolvedRoot = timelineExportRoot
     ? path.resolve(timelineExportRoot)
@@ -70,8 +128,33 @@ function timelineExportPlugin(timelineExportRoot: string | undefined) {
         return;
       }
 
-      res.statusCode = 200;
       res.setHeader("Content-Type", contentTypeFor(filePath));
+      res.setHeader("Accept-Ranges", "bytes");
+
+      const range = parseByteRange(req.headers.range, stats.size);
+      if (req.headers.range && !range) {
+        res.statusCode = 416;
+        res.setHeader("Content-Range", `bytes */${stats.size}`);
+        res.end();
+        return;
+      }
+
+      if (range) {
+        res.statusCode = 206;
+        res.setHeader(
+          "Content-Range",
+          `bytes ${range.start}-${range.end}/${stats.size}`,
+        );
+        res.setHeader("Content-Length", range.end - range.start + 1);
+        fs.createReadStream(filePath, {
+          start: range.start,
+          end: range.end,
+        }).pipe(res);
+        return;
+      }
+
+      res.statusCode = 200;
+      res.setHeader("Content-Length", stats.size);
       fs.createReadStream(filePath).pipe(res);
     });
   }

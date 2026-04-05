@@ -18,6 +18,10 @@ import {
   formatTimelineSpan,
   getPanStepSeconds,
 } from "../lib/timeline-math.js";
+import { createDebugLogger } from "../lib/debug-log.js";
+import { shouldSyncCenterTimestampFromPlayback } from "../lib/timeline-viewer-state.js";
+
+const viewerDebug = createDebugLogger("timeline:viewer");
 
 export function TimelineViewerPage() {
   const { jobId = "" } = useParams();
@@ -52,6 +56,11 @@ export function TimelineViewerPage() {
 
         setZoom(initialZoom);
         setCenterTimestamp(initialCenter);
+        viewerDebug("manifest-loaded", {
+          jobId: response.job.id,
+          initialCenterTimestamp: initialCenter,
+          initialZoom,
+        });
       })
       .catch((reason: unknown) =>
         setError(
@@ -68,13 +77,29 @@ export function TimelineViewerPage() {
       return;
     }
 
-    if (
-      playback.isPlaying ||
-      Math.abs(playback.currentTimestamp - centerTimestamp) > 0.001
-    ) {
+    const shouldSync = shouldSyncCenterTimestampFromPlayback(
+      centerTimestamp,
+      playback.currentTimestamp,
+      playback.isPlaying,
+    );
+
+    viewerDebug("sync-snapshot", {
+      centerTimestamp,
+      isPlaying: playback.isPlaying,
+      playbackTimestamp: playback.currentTimestamp,
+      shouldSync,
+      zoom,
+    });
+
+    if (shouldSync) {
+      viewerDebug("center-sync-from-playback", {
+        centerTimestamp,
+        playbackTimestamp: playback.currentTimestamp,
+        zoom,
+      });
       setCenterTimestamp(playback.currentTimestamp);
     }
-  }, [centerTimestamp, manifest, playback.currentTimestamp, playback.isPlaying]);
+  }, [centerTimestamp, manifest, playback.currentTimestamp, playback.isPlaying, zoom]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -93,7 +118,13 @@ export function TimelineViewerPage() {
 
       if (event.code === "Space") {
         event.preventDefault();
-        void playback.togglePlay();
+        viewerDebug("toggle-play", {
+          source: "keyboard",
+          centerTimestamp,
+          isPlaying: playback.isPlaying,
+          playbackTimestamp: playback.currentTimestamp,
+        });
+        void playback.togglePlay(centerTimestamp);
         return;
       }
 
@@ -139,6 +170,12 @@ export function TimelineViewerPage() {
     }
 
     const nextTimestamp = clampTimestamp(manifest, timestamp);
+    viewerDebug("seek-request", {
+      requestedTimestamp: timestamp,
+      nextTimestamp,
+      isPlaying: playback.isPlaying,
+      playbackTimestamp: playback.currentTimestamp,
+    });
     setCenterTimestamp(nextTimestamp);
     await playback.seek(nextTimestamp, { autoplay: playback.isPlaying });
   }
@@ -148,7 +185,12 @@ export function TimelineViewerPage() {
       return;
     }
 
-    setCenterTimestamp(clampTimestamp(manifest, timestamp));
+    const nextTimestamp = clampTimestamp(manifest, timestamp);
+    viewerDebug("seek-preview", {
+      previewTimestamp: nextTimestamp,
+      requestedTimestamp: timestamp,
+    });
+    setCenterTimestamp(nextTimestamp);
   }
 
   if (loading) {
@@ -230,7 +272,13 @@ export function TimelineViewerPage() {
           }}
           onToggleDetections={() => setShowDetections((current) => !current)}
           onTogglePlay={() => {
-            void playback.togglePlay();
+            viewerDebug("toggle-play", {
+              source: "button",
+              centerTimestamp,
+              isPlaying: playback.isPlaying,
+              playbackTimestamp: playback.currentTimestamp,
+            });
+            void playback.togglePlay(centerTimestamp);
           }}
           onToggleVocalizations={() => setShowVocalizations((current) => !current)}
           onZoomChange={setZoom}

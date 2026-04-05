@@ -14,21 +14,31 @@ import {
 } from "./timeline-test-fixtures.js";
 
 describe("timeline-math", () => {
-  it("clamps viewport ranges to job boundaries", () => {
+  it("keeps the playhead timestamp centered in the viewport near job edges", () => {
     expect(
       getViewportRange(sampleTimelineManifest, "1h", sampleTimelineManifest.job.start_timestamp + 60),
     ).toEqual({
-      start: 1_711_929_600,
-      end: 1_711_933_200,
+      start: 1_711_927_860,
+      end: 1_711_931_460,
       span: 3_600,
     });
 
     expect(
       getViewportRange(sampleTimelineManifest, "1h", sampleTimelineManifest.job.end_timestamp - 60),
     ).toEqual({
-      start: 1_711_933_200,
-      end: 1_711_936_800,
+      start: 1_711_934_940,
+      end: 1_711_938_540,
       span: 3_600,
+    });
+  });
+
+  it("still centers the playhead when the zoom span is wider than the job", () => {
+    expect(
+      getViewportRange(sampleTimelineManifest, "24h", sampleTimelineManifest.job.start_timestamp),
+    ).toEqual({
+      start: 1_711_886_400,
+      end: 1_711_972_800,
+      span: 86_400,
     });
   });
 
