@@ -5,17 +5,24 @@ returning to a clean `main` when the workflow is feature-branch based.
 
 ## Preconditions
 
-- `session-review` passed with `Ready for session-end: yes`
+- `session-review` passed with `Ready for session-end: yes`, or the user has
+  explicitly invoked `session-end` with no unresolved automated verification
+  failures
 - A direct user invocation of `session-end` counts as approval and confirmation
-  that the work is unblocked unless the user explicitly says not to merge
+  that the work is unblocked and that any intended manual verification is
+  already complete unless the user explicitly says not to merge
 - On a `feature/*` branch, unless the user explicitly requested direct work on
   `main`
 
 ## Steps
 
 1. **Gate check**
-   - Verify `session-review` ran and passed
-   - If files changed since the review, rerun `session-review`
+   - Verify there are no unresolved review findings or failed required
+     automated checks
+   - If files changed since the review, re-check the changed scope before
+     continuing
+   - Do not stop for additional smoke-test or manual-verification requests
+     after an explicit user invocation of `session-end`
 
 2. **Commit remaining reviewed changes**
    - If uncommitted changes remain, stage only the reviewed scope
@@ -28,8 +35,7 @@ returning to a clean `main` when the workflow is feature-branch based.
 4. **Create or reuse a pull request**
    - Check for an existing PR on the branch first
    - If none exists, create one targeting `main`
-   - Include a short summary, verification commands, and any remaining manual
-     smoke coverage for paths not covered by automated tests
+   - Include a short summary and verification commands
 
 5. **Merge by default**
    - Treat `session-end` as authorization to complete the merge flow

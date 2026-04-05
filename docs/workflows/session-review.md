@@ -1,6 +1,8 @@
 # session-review
 
-Validation gate that must pass before `session-end` can proceed.
+Default validation gate before `session-end`. An explicit user invocation of
+`session-end` can accept the current manual-verification state as long as there
+are no unresolved automated verification failures or review findings.
 
 ## Steps
 
@@ -23,8 +25,8 @@ Validation gate that must pass before `session-end` can proceed.
    - Are docs still truthful about what is implemented versus still planned?
 
 3. **Completeness checks**
-   - Are `CLAUDE.md`, `AGENTS.md`, `STATUS.md`, `MEMORY.md`, `PLANS.md`, or
-     workflow docs updated where needed?
+   - Are `CLAUDE.md`, `AGENTS.md`, `STATUS.md`, `MEMORY.md`, or workflow docs
+     updated where needed?
    - If DynamoDB schema or access patterns changed, were
      `scripts/src/db-local-init.ts`, `MEMORY.md`, and `DECISIONS.md` updated?
    - Is automated coverage added or explicitly deferred with a reason when new
@@ -38,7 +40,9 @@ Validation gate that must pass before `session-end` can proceed.
    - `pnpm test` when the modified active frontend behavior is covered
    - `pnpm test:legacy` when the modified dormant API or data behavior is
      covered and required local services are available
-   - Re-run manual smoke only for the relevant uncovered changed path
+   - Note any manual verification already completed for relevant uncovered
+     changed paths, but do not require new smoke-test execution as a gate for
+     an explicit `session-end` request
 
 5. **Report findings**
    - Include file references and concrete risks where applicable

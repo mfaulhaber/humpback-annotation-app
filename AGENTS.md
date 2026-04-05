@@ -8,7 +8,7 @@ Follow these phases in order for non-trivial tasks. Each phase references a
 workflow file in `docs/workflows/` with the detailed steps.
 
 ### Phase 1: Context (`docs/workflows/session-begin.md`)
-- Read `CLAUDE.md`, `STATUS.md`, `PLANS.md`, and `DECISIONS.md`
+- Read `CLAUDE.md`, `STATUS.md`, and `DECISIONS.md`
 - Read `README.md` for current setup and runtime behavior
 - Read `MEMORY.md` when the task touches API shape, DynamoDB, media delivery,
   or local development behavior
@@ -27,9 +27,8 @@ workflow file in `docs/workflows/` with the detailed steps.
 ### Phase 3: Plan (`docs/workflows/session-plan.md`)
 - Create a feature branch `feature/<feature-name>` for non-trivial work
 - Write an implementation plan to `docs/plans/YYYY-MM-DD-<feature>.md`
-- Update `PLANS.md` so the active work points at the repo-local plan
-- Commit the spec, plan, and `PLANS.md` update together as the first commit on
-  the feature branch when those artifacts are newly created
+- Commit the spec and plan together as the first commit on the feature branch
+  when those artifacts are newly created
 
 ### Phase 4: Implement (`docs/workflows/session-implement.md`)
 - Work through plan tasks sequentially
@@ -39,8 +38,8 @@ workflow file in `docs/workflows/` with the detailed steps.
 - Run the repo verification gates before finalizing implementation
 - Keep the implementation scope batched so `session-review` and `session-end`
   can validate and commit one focused change set
-- Update `STATUS.md`, `MEMORY.md`, `PLANS.md`, and `DECISIONS.md` when the
-  change affects implemented behavior, workflows, data models, or architecture
+- Update `STATUS.md`, `MEMORY.md`, and `DECISIONS.md` when the change affects
+  implemented behavior, workflows, data models, or architecture
 
 ### Phase 5: Debug (`docs/workflows/session-debug.md`)
 - If manual testing or automated verification exposes issues, debug through
@@ -58,7 +57,8 @@ workflow file in `docs/workflows/` with the detailed steps.
 - Push the feature branch
 - Create or update a PR targeting `main`
 - Treat a direct user invocation of `session-end` as approval and confirmation
-  that the work is unblocked unless the user explicitly says not to merge
+  that the work is unblocked and that any intended manual verification is
+  already complete unless the user explicitly says not to merge
 - Squash-merge the PR when mergeable
 - If branch protections, required checks, conflicts, or permissions block the
   merge, report the blocker instead of forcing around it
@@ -81,4 +81,4 @@ workflow file in `docs/workflows/` with the detailed steps.
 - Run `pnpm test:legacy` when the touched dormant API or data behavior is
   covered and required local services are available; if not, say exactly what
   was not run
-- Keep `.claude/commands/`, `.agents/skills/`, and `docs/workflows/` aligned
+- Keep `.claude/commands/` and `docs/workflows/` aligned

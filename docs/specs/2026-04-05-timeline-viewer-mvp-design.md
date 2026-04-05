@@ -490,7 +490,6 @@ Expected documentation work:
 
 - `README.md`
 - `STATUS.md`
-- `PLANS.md`
 - `MEMORY.md`
 - possibly `DECISIONS.md` if this pivot is accepted as a material architectural
   change

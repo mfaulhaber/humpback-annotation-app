@@ -30,15 +30,12 @@ humpback-annotation-app/
 ├── README.md
 ├── DECISIONS.md
 ├── MEMORY.md
-├── PLANS.md
 ├── STATUS.md
 ├── package.json
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
 ├── .claude/
 │   └── commands/
-├── .agents/
-│   └── skills/
 ├── docs/
 │   ├── plans/
 │   ├── specs/

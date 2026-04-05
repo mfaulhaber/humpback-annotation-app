@@ -93,7 +93,6 @@ CloudFront-backed S3 in production.
 - Modify: `README.md`
 - Modify: `STATUS.md`
 - Modify: `MEMORY.md`
-- Modify: `PLANS.md`
 - Modify: `DECISIONS.md`
 
 **Acceptance criteria:**

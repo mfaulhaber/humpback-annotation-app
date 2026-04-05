@@ -20,7 +20,6 @@ or debugging.
 3. **Read context files**
    - `CLAUDE.md` for project rules, commands, and verification expectations
    - `STATUS.md` for what is actually implemented right now
-   - `PLANS.md` for active work, backlog, and recently completed items
    - `DECISIONS.md` for accepted architecture decisions
    - `README.md` for current local setup and runtime behavior
    - `MEMORY.md` when the task touches API shape, DynamoDB, media delivery, or
@@ -30,8 +29,7 @@ or debugging.
    - Look for local `feature/*` branches
    - Look for repo-local plans in `docs/plans/`
    - Look for specs in `docs/specs/`
-   - Note any legacy `~/.claude/plans/...` references still recorded in
-     `PLANS.md`
+   - Note any repo-local plan or spec that matches the request
 
 5. **Summarize the project state**
    - What the app currently does versus what is still planned

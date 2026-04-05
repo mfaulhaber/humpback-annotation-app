@@ -108,14 +108,12 @@ integration, deployed CDK stacks, CI/CD, and the cloud delivery pipeline.
   - `README.md` for user-facing setup and runtime behavior
   - `STATUS.md` for implemented behavior and constraints
   - `MEMORY.md` for stable reference material
-  - `PLANS.md` for active/backlog tracking
   - `DECISIONS.md` for append-only architecture decisions
   - `docs/workflows/` for session workflow steps
-  - `docs/plans/` for repo-local implementation plans
+  - `docs/plans/` for repo-local implementation plans and planning history
   - `docs/specs/` for design specs on significant work
-- New detailed plans should live in `docs/plans/`. `PLANS.md` remains the
-  high-level active/backlog tracker.
-- Keep `.claude/commands/`, `.agents/skills/`, and `docs/workflows/` in sync.
+- Implementation plans should live in `docs/plans/`.
+- Keep `.claude/commands/` and `docs/workflows/` in sync.
 
 ### 3.6 Verification
 - Baseline verification for meaningful changes:
@@ -127,6 +125,9 @@ integration, deployed CDK stacks, CI/CD, and the cloud delivery pipeline.
   is covered and the required local services are available.
 - If a change requires manual verification because automated coverage is missing
   or unavailable, state exactly what was verified and what was not run.
+- A direct user invocation of `session-end` counts as confirmation that any
+  intended manual verification has already been handled; do not block that
+  finish step on additional smoke-test requests.
 - Do not claim coverage you did not execute.
 
 ---
@@ -167,8 +168,9 @@ Every meaningful change should include:
 - `pnpm test` when the touched active frontend behavior is covered
 - `pnpm test:legacy` when the touched dormant API or data behavior is covered
   and the local stack is available
-- A targeted manual smoke test for changed viewer interactions that are not yet
-  credibly covered by the frontend suite
+- Targeted manual verification for changed viewer interactions that are not yet
+  credibly covered by the frontend suite when the user or implementer chooses
+  to perform it
 
 When a change introduces substantial API, data-access, or aggregate logic,
 prefer adding or extending automated tests as part of the same change.
@@ -207,7 +209,6 @@ Current non-goals for this repo:
 |------|---------|
 | `AGENTS.md` | Codex workflow entry point |
 | `STATUS.md` | Implemented behavior, capabilities, and current constraints |
-| `PLANS.md` | Active work, backlog, and recently completed items |
 | `DECISIONS.md` | Append-only architecture decision log |
 | `MEMORY.md` | Stable reference material for entities, DynamoDB, and local dev |
 
@@ -231,7 +232,6 @@ humpback-annotation-app/
 ├── AGENTS.md
 ├── README.md
 ├── STATUS.md
-├── PLANS.md
 ├── DECISIONS.md
 ├── MEMORY.md
 ├── package.json
@@ -244,8 +244,6 @@ humpback-annotation-app/
 │       ├── session-debug.md
 │       ├── session-review.md
 │       └── session-end.md
-├── .agents/
-│   └── skills/
 ├── docs/
 │   ├── plans/
 │   ├── specs/

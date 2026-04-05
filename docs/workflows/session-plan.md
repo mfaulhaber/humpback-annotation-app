@@ -1,8 +1,7 @@
 # session-plan
 
 Create or refine the implementation plan, prepare the working branch for
-non-trivial work, and keep repo-local planning artifacts aligned with
-`PLANS.md`.
+non-trivial work, and keep repo-local planning artifacts current.
 
 ## Preconditions
 
@@ -14,8 +13,8 @@ non-trivial work, and keep repo-local planning artifacts aligned with
 
 1. **Read the approved task brief or design**
    - Use conversation context or a written spec in `docs/specs/`
-   - Review `CLAUDE.md`, `PLANS.md`, and `DECISIONS.md` when the task touches
-     product rules, DynamoDB, API shape, or workflow conventions
+   - Review `CLAUDE.md` and `DECISIONS.md` when the task touches product rules,
+     DynamoDB, API shape, or workflow conventions
 
 2. **Derive a short feature name**
    - Example: `real-whale-data-ingestion`
@@ -40,15 +39,12 @@ non-trivial work, and keep repo-local planning artifacts aligned with
    - Save a design spec to `docs/specs/YYYY-MM-DD-<topic>-design.md` when the
      task needs one
 
-6. **Update `PLANS.md`**
-   - Move the active work into the `Active` section if needed
-   - Point the detailed plan reference at the repo-local file in `docs/plans/`
-   - Keep older legacy references only when the original artifact is not yet
-     migrated
+6. **Keep planning artifacts together**
+   - Prefer one repo-local plan file in `docs/plans/` per scoped effort
+   - Refresh the plan or spec in place when resuming the same effort
 
 7. **Commit planning artifacts together**
-   - Commit the plan, spec, and `PLANS.md` update together when they are newly
-     created
+   - Commit the plan and spec together when they are newly created
 
 ## Plan Format
 

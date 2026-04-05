@@ -58,10 +58,9 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
 ### Design & Coordination
 
 - Repo-local design spec and implementation plan for the timeline viewer pivot
-- Coordination files: AGENTS.md, CLAUDE.md, DECISIONS.md, MEMORY.md, PLANS.md,
-  STATUS.md
+- Coordination files: AGENTS.md, CLAUDE.md, DECISIONS.md, MEMORY.md, STATUS.md
 - Codex workflow docs in `docs/workflows/` with matching `.claude/commands/`
-  entrypoints and `.agents/skills/` wrappers
+  entrypoints
 
 ## Not Yet Implemented
 

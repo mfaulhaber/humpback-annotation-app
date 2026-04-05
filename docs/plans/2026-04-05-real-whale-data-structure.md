@@ -61,7 +61,6 @@ folders while preserving seed-data support for local development and tests.
 - Modify: `README.md`
 - Modify: `STATUS.md`
 - Modify: `MEMORY.md`
-- Modify: `PLANS.md`
 
 **Acceptance criteria:**
 - [ ] Local setup docs explain `MEDIA_ROOT` and the real-data folder structure
