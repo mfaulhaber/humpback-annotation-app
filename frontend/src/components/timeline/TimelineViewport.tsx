@@ -17,6 +17,7 @@ import {
   timeToPixel,
   type TimeRange,
 } from "../../lib/timeline-math.js";
+import { createDebugLogger } from "../../lib/debug-log.js";
 import { timelineTileCache } from "../../lib/tile-cache.js";
 import { ConfidenceStrip } from "./ConfidenceStrip.js";
 import { DetectionOverlay } from "./DetectionOverlay.js";
@@ -39,6 +40,7 @@ interface DragState {
 }
 
 const DRAG_THRESHOLD_PX = 4;
+const viewportDebug = createDebugLogger("timeline:viewport");
 
 export function TimelineViewport({
   centerTimestamp,
@@ -103,6 +105,12 @@ export function TimelineViewport({
       startX: event.clientX,
       startCenterTimestamp: centerTimestamp,
     });
+    viewportDebug("drag-start", {
+      centerTimestamp,
+      pointerId: event.pointerId,
+      width,
+      zoom,
+    });
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
@@ -127,6 +135,15 @@ export function TimelineViewport({
     if (dragExceededThresholdRef.current) {
       const deltaX = event.clientX - dragState.startX;
       const deltaSeconds = (-deltaX / width) * range.span;
+      viewportDebug("drag-commit", {
+        committedTimestamp: dragState.startCenterTimestamp + deltaSeconds,
+        deltaSeconds,
+        deltaX,
+        pointerId: event.pointerId,
+        startCenterTimestamp: dragState.startCenterTimestamp,
+        width,
+        zoom,
+      });
       onCenterTimestampCommit(dragState.startCenterTimestamp + deltaSeconds);
       suppressNextClickRef.current = true;
     }
@@ -148,6 +165,12 @@ export function TimelineViewport({
 
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - bounds.left;
+    viewportDebug("click-commit", {
+      committedTimestamp: pixelToTimestamp(x, range, width),
+      clickOffsetX: x,
+      width,
+      zoom,
+    });
     onCenterTimestampCommit(pixelToTimestamp(x, range, width));
   }
 
