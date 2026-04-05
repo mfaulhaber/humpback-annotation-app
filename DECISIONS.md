@@ -142,6 +142,36 @@ Sample IDs are `{dataset_name}_{filename_stem}` for global uniqueness.
 - `MEDIA_ROOT` must point to the data root when using real data
 - The `--all` flag ingests multiple datasets under a parent directory
 
+## ADR-007: Pivot the Active Frontend to a Static Timeline Viewer Over Same-Origin Export Artifacts
+
+**Date**: 2026-04-05
+**Status**: Accepted
+
+**Context**: The repository originally centered its active user experience on a
+folder/sample annotation workflow backed by Fastify and DynamoDB. The new MVP
+focuses instead on readonly inspection of exported acoustic timelines. The
+approved consumer contract defines a static data layout rooted at `/data/*`,
+and the reference viewer expects the frontend to load the registry, manifests,
+tiles, and chunked audio directly rather than through an API.
+
+**Decision**: Make the active frontend surface a static React timeline viewer
+with two routes: `/` for the timeline registry and `/:jobId` for the viewer.
+The viewer consumes `data/index.json`, `data/{jobId}/manifest.json`,
+spectrogram tiles, and audio chunks directly from same-origin static paths.
+Local development mounts a `TIMELINE_EXPORT_ROOT` directory at `/data` in Vite,
+while the intended deployed shape remains CloudFront backed by S3. The legacy
+annotation API, DynamoDB schema, and frontend pages remain in the repository
+but are removed from the active router and navigation.
+
+**Consequences**:
+- Timeline viewing no longer requires API or DynamoDB locally.
+- The active frontend now depends on the external export contract rather than
+  the annotation API surface.
+- Media and timeline artifacts remain URL-addressable and are not proxied
+  through compute.
+- The repository still contains annotation code, so future work on dormant code
+  must continue preserving its label and aggregate semantics.
+
 ---
 
 Use this template for future decisions:

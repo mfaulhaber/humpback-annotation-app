@@ -39,15 +39,18 @@ reviewable implementation diff.
      `docs/workflows/`, `.claude/commands/`, and the session skills together
 
 5. **Add or update automated tests when relevant**
-   - Extend `tests/src/api-integration.test.ts` or nearby test files when API,
-     auth, or aggregate behavior changes
+   - Extend frontend package tests when active timeline viewer logic changes
+   - Extend `tests/src/api-integration.test.ts` or nearby test files when
+     dormant API, auth, or aggregate behavior changes
    - Add targeted package tests when new logic makes that practical
 
 6. **Run verification gates**
    - `pnpm typecheck`
    - `pnpm build`
-   - `pnpm test` when the touched behavior is covered and the required local
-     services are available
+   - `pnpm test` when the touched active frontend or isolated package logic is
+     covered
+   - `pnpm test:legacy` when the touched dormant API, auth, or data behavior
+     is covered and the required local services are available
    - Re-run the relevant manual smoke path only when automated coverage is
      unavailable or incomplete
 
@@ -69,7 +72,8 @@ reviewable implementation diff.
 - Do not refactor unrelated code
 - Do not quietly change annotation semantics, DynamoDB access patterns, or
   media-delivery assumptions without documenting that intent
-- If `pnpm test` cannot be run, state exactly why and what was verified instead
+- If `pnpm test` or `pnpm test:legacy` cannot be run when relevant, state
+  exactly why and what was verified instead
 
 ## Does NOT
 

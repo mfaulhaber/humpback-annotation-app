@@ -34,15 +34,19 @@ times as needed between implementation and final review.
    - Change only what is necessary to address the root cause
 
 6. **Add regression coverage when appropriate**
-   - If API, auth, or aggregate behavior regressed, extend
+   - If active timeline viewer logic regressed, extend the nearest frontend
+     Vitest coverage
+   - If dormant API, auth, or aggregate behavior regressed, extend
      `tests/src/api-integration.test.ts` when practical
    - If the bug lives in isolated package logic, add the nearest sensible test
 
 7. **Run verification**
    - `pnpm typecheck`
    - `pnpm build`
-   - `pnpm test` when the changed path is covered and required local services
-     are available
+   - `pnpm test` when the changed active frontend or isolated package logic is
+     covered
+   - `pnpm test:legacy` when the changed dormant API or data path is covered
+     and required local services are available
    - Re-run the relevant manual smoke path only when automated coverage is not
      available
 

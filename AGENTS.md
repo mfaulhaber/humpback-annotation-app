@@ -77,6 +77,8 @@ workflow file in `docs/workflows/` with the detailed steps.
 - Aggregate percentages stay hidden until the current user has labeled the
   sample
 - Verification baseline: `pnpm typecheck` and `pnpm build`
-- Run `pnpm test` when the touched behavior is covered and required local
-  services are available; if not, say exactly what was not run
+- Run `pnpm test` when the touched active frontend behavior is covered
+- Run `pnpm test:legacy` when the touched dormant API or data behavior is
+  covered and required local services are available; if not, say exactly what
+  was not run
 - Keep `.claude/commands/`, `.agents/skills/`, and `docs/workflows/` aligned

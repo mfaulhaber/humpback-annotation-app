@@ -11,9 +11,11 @@
   "scripts": {
     "preinstall": "node ./scripts/check-node.mjs",
     "dev": "pnpm --filter @humpback/scripts run dev",
+    "dev:timeline": "pnpm --filter @humpback/frontend dev",
     "typecheck": "pnpm -r --if-present run typecheck",
     "build": "pnpm -r --if-present run build",
-    "test": "pnpm -r --if-present run test",
+    "test": "pnpm --filter @humpback/frontend test",
+    "test:legacy": "pnpm --filter @humpback/tests test",
     "db:local:init": "pnpm --filter @humpback/scripts run db:local:init",
     "db:local:seed": "pnpm --filter @humpback/scripts run db:local:seed",
     "db:ingest": "pnpm --filter @humpback/scripts run db:ingest",

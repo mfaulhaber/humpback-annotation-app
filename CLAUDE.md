@@ -1,22 +1,23 @@
-# Humpback Annotation App
+# Humpback Timeline Viewer
 
 ## 1. Purpose
 
-This project is a low-cost whale annotation web application for registered
-users. V1 should let users:
+This project's active MVP is a low-cost whale timeline viewer that renders
+exported acoustic jobs from same-origin static artifacts. The active frontend
+should let users:
 
-- browse whale vocalization samples by folder
-- preview short audio clips
-- view pre-rendered spectrograms when available
-- submit one current label per sample per user
-- see aggregate percentages only after submitting their own label
-- filter labeled vs unlabeled samples
-- request a suggested next unlabeled sample
-- review labels in an admin flow
+- browse available exported timelines from a landing page
+- open one job in a timeline viewer route
+- inspect pre-rendered spectrogram tiles across multiple zoom levels
+- play chunked audio in sync with the centered playhead
+- review confidence, detections, and vocalization overlays
+- work locally against exported artifacts without requiring API mediation
 
-The repository now contains an implemented local skeleton app plus the design
-docs for future AWS deployment. Always distinguish clearly between what exists
-today and what is still planned.
+The repository still contains the earlier annotation application and its API,
+but that work is dormant in the active UI. When touching legacy annotation
+code, preserve its label and aggregate semantics unless the change explicitly
+updates them. Always distinguish clearly between what exists today and what is
+still planned.
 
 For Codex workflow guidance, see `AGENTS.md`.
 
@@ -25,18 +26,22 @@ For Codex workflow guidance, see `AGENTS.md`.
 ## 2. High-Level Architecture
 
 Components:
-1. React 19 + Vite frontend in `frontend/`
-2. Fastify API in `api/` with a shared app entry point for local dev and a
-   Lambda adapter stub
-3. DynamoDB-backed catalog and labels access layers under `api/src/data/`
-4. Local tooling in `scripts/` for dev orchestration, table init, seed data,
-   and real-data ingestion
-5. Vitest integration coverage in `tests/`
-6. Future infrastructure code in `cdk/`
-7. Local or external media served from `local_media/` or `MEDIA_ROOT`
+1. React 19 + Vite frontend in `frontend/` for the active timeline viewer
+2. Same-origin exported artifacts under `/data/*` in local dev and intended
+   CloudFront/S3 deployment
+3. Dormant Fastify API in `api/` with a shared app entry point for local dev
+   and a Lambda adapter stub
+4. Dormant DynamoDB-backed catalog and labels access layers under
+   `api/src/data/`
+5. Local tooling in `scripts/` for dev orchestration, table init, seed data,
+   and real-data ingestion for the legacy stack
+6. Vitest frontend coverage in `frontend/` for the active timeline viewer plus
+   legacy integration coverage in `tests/` for the dormant API path
+7. Future infrastructure code in `cdk/`
+8. Local or external media served from `local_media/` or `MEDIA_ROOT`
 
-Current non-implemented areas include production auth integration, deployed CDK
-stacks, CI/CD, and the cloud delivery pipeline.
+Current non-implemented areas include timeline label editing, production auth
+integration, deployed CDK stacks, CI/CD, and the cloud delivery pipeline.
 
 ---
 
@@ -48,28 +53,31 @@ stacks, CI/CD, and the cloud delivery pipeline.
 - Commit `pnpm-lock.yaml` whenever dependencies change.
 - Use these commands for normal development:
   - Install dependencies: `pnpm install`
+  - Start the active timeline viewer: `TIMELINE_EXPORT_ROOT=... pnpm dev:timeline`
   - Start the full local stack: `pnpm dev`
   - Start with seed data: `pnpm dev --seed`
   - Start with real-data ingest: `MEDIA_ROOT=... pnpm dev --ingest <path>`
   - Run type checks: `pnpm typecheck`
   - Build all packages: `pnpm build`
-  - Run automated tests: `pnpm test`
+  - Run active frontend tests: `pnpm test`
+  - Run legacy API integration tests: `pnpm test:legacy`
   - Initialize DynamoDB Local tables: `pnpm db:local:init`
   - Seed DynamoDB Local: `pnpm db:local:seed`
   - Ingest real data: `pnpm db:ingest -- --path <dir>`
   - Synthesize infrastructure stubs: `pnpm cdk:synth`
 
 ### 3.2 Annotation and Data Rules
-- Preserve a unique current label for each `(sample_id, user_id)` pair.
+- Preserve a unique current label for each `(sample_id, user_id)` pair when
+  touching the dormant annotation stack.
 - Keep aggregate percentages hidden until the current user has labeled the
-  sample.
+  sample when touching the dormant annotation stack.
 - Treat label writes and aggregate maintenance as one logical transaction.
 - Keep browse/catalog data and annotation state logically separate.
-- Users may browse without labeling first.
 - `suggest-next` should continue to return only unlabeled candidates within the
   active folder unless the change intentionally redefines that behavior.
 
 ### 3.3 Media and Ingestion Rules
+- Active timeline viewer data is fetched from same-origin `/data/*` paths.
 - Media delivery should remain URL-based. APIs return media URLs, not media
   bytes.
 - Audio clips and spectrograms are storage-backed assets in both local and
@@ -84,6 +92,8 @@ stacks, CI/CD, and the cloud delivery pipeline.
 ### 3.4 API, DynamoDB, and Local Dev Practices
 - Read `DECISIONS.md` and `MEMORY.md` before changing DynamoDB attributes,
   indexes, query patterns, or local stack behavior.
+- Keep local timeline viewing possible without API or DynamoDB when exported
+  artifacts are available.
 - If DynamoDB table attributes or indexes change, update
   `scripts/src/db-local-init.ts`, `MEMORY.md`, and `STATUS.md`; add an ADR in
   `DECISIONS.md` when the change is architecturally significant.
@@ -111,8 +121,10 @@ stacks, CI/CD, and the cloud delivery pipeline.
 - Baseline verification for meaningful changes:
   - `pnpm typecheck`
   - `pnpm build`
-- Run `pnpm test` when the touched API, auth, data, or end-to-end behavior is
-  covered and the required local services are available.
+- Run `pnpm test` when the touched active frontend or isolated package logic is
+  covered.
+- Run `pnpm test:legacy` when the touched dormant API, auth, or data behavior
+  is covered and the required local services are available.
 - If a change requires manual verification because automated coverage is missing
   or unavailable, state exactly what was verified and what was not run.
 - Do not claim coverage you did not execute.
@@ -145,16 +157,18 @@ aligned with the real API/data model where practical.
 
 ## 5. Testing and Validation Requirements
 
-This repo includes TypeScript checks, package builds, and a Vitest integration
-suite that targets a running local stack.
+This repo includes TypeScript checks, package builds, a frontend Vitest suite
+for the active timeline viewer, and a legacy integration suite for the dormant
+API path.
 
 Every meaningful change should include:
 - `pnpm typecheck`
 - `pnpm build`
-- `pnpm test` when the touched behavior is covered and the local stack is
-  available
-- A targeted manual smoke test only for changed behavior without credible
-  automated coverage
+- `pnpm test` when the touched active frontend behavior is covered
+- `pnpm test:legacy` when the touched dormant API or data behavior is covered
+  and the local stack is available
+- A targeted manual smoke test for changed viewer interactions that are not yet
+  credibly covered by the frontend suite
 
 When a change introduces substantial API, data-access, or aggregate logic,
 prefer adding or extending automated tests as part of the same change.
@@ -206,7 +220,7 @@ Current non-goals for this repo:
 | API | Fastify 5 with `@fastify/aws-lambda` adapter stub |
 | Frontend | React 19 + Vite 8 |
 | Data Store | DynamoDB Local in dev, DynamoDB-style schema in production plans |
-| Testing | Vitest integration tests plus targeted manual smoke when needed |
+| Testing | Vitest frontend tests, legacy Vitest integration tests, plus targeted manual smoke when needed |
 | Infra Direction | CDK stubs today, fuller stacks planned |
 
 ### 8.3 Repository Layout
@@ -246,7 +260,10 @@ humpback-annotation-app/
 
 ### 8.4 Runtime Constraints
 
-- `pnpm test` expects the local API and DynamoDB stack to be available
+- `pnpm test` does not require local services
+- `pnpm test:legacy` expects the local API and DynamoDB stack to be available
+- `pnpm dev:timeline` expects `TIMELINE_EXPORT_ROOT` to point at a directory
+  containing `index.json` and exported job folders
 - `MEDIA_ROOT` defaults to `./local_media` but can point at a real data root
 - Spectrograms are nullable; the UI and API must handle missing spectrograms
 - Production auth and cloud deployment remain planned work

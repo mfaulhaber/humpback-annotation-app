@@ -1,9 +1,13 @@
-# Humpback Annotation App
+# Humpback Timeline Viewer
 
-A web application for annotating whale vocalization samples. Users browse
-folders of audio clips, view spectrograms, and submit labels from a set of
-12 vocalization categories. Aggregate label statistics are revealed only after
-a user submits their own label.
+The active MVP in this repository is a static React timeline viewer for
+exported humpback acoustic jobs. The frontend loads same-origin timeline
+artifacts from `/data/*`, renders a landing page of available jobs, and opens a
+full-screen timeline workspace for each export.
+
+The earlier folder/sample annotation stack remains in the repository, but it is
+now dormant in the active UI. Its API, DynamoDB, and dev-auth code are still
+available for reference and future reuse.
 
 ## Prerequisites
 
@@ -11,123 +15,90 @@ a user submits their own label.
   [fnm](https://github.com/Schniz/fnm): `nvm install 22`
 - **pnpm 10+** — install via `corepack enable && corepack prepare pnpm@latest --activate`
   or `npm install -g pnpm`
-- **Docker** — required for DynamoDB Local
-  ([Docker Desktop](https://www.docker.com/products/docker-desktop/),
-  [OrbStack](https://orbstack.dev/), or similar)
+- **Docker** — only required when working on the dormant annotation API stack
+  backed by DynamoDB Local
 
-## Quick Start (Seed Data)
+## Quick Start (Timeline Viewer MVP)
 
 ```bash
 git clone <repo-url> && cd humpback-annotation-app
 pnpm install
-pnpm dev --seed
+TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
 ```
 
-This starts the full stack with synthetic test data (3 folders, 65 samples).
 Open **http://localhost:6173** in your browser.
 
-## Quick Start (Real Data)
+The export root should contain `index.json` and one folder per job:
 
-To run against real whale recordings:
+```text
+<TIMELINE_EXPORT_ROOT>/
+  index.json
+  <job_id>/
+    manifest.json
+    tiles/
+      24h/tile_0000.png
+      6h/tile_0000.png
+      1h/tile_0000.png
+      15m/tile_0000.png
+      5m/tile_0000.png
+      1m/tile_0000.png
+    audio/
+      chunk_0000.mp3
+```
+
+The Vite dev server mounts that directory at `/data`, so the browser uses the
+same URL shape locally and in the intended CloudFront/S3 deployment.
+
+## Active Routes
+
+- `/` — landing page listing available timelines from `data/index.json`
+- `/:jobId` — timeline viewer driven by `data/{jobId}/manifest.json`
+
+## Legacy Annotation Stack
+
+The older annotation workflow is still implemented in-repo, but its routes are
+hidden from the active app shell.
+
+Use the legacy stack only when you are intentionally working on that dormant
+code path:
 
 ```bash
-pnpm install
 MEDIA_ROOT=/path/to/data/root pnpm dev --ingest /path/to/data/root/positives/humpback
-```
-
-This ingests all dataset folders found under the given path and serves audio
-and spectrograms from `MEDIA_ROOT`. The expected folder structure is:
-
-```
-<MEDIA_ROOT>/
-  positives/
-    humpback/
-      <dataset_name>/          # e.g. noaa_glacier_bay
-        YYYY/MM/DD/
-          <start>Z_<end>Z.flac # audio (.flac, .wav, or .mp3)
-          <start>Z_<end>Z.png  # spectrogram (optional)
-```
-
-To ingest a single dataset instead of all subdirectories:
-
-```bash
-pnpm db:ingest -- --path /path/to/positives/humpback/noaa_glacier_bay
-```
-
-Use `--dry-run` to preview what would be written without touching DynamoDB.
-
-## Manual Setup
-
-If you prefer to run each step individually:
-
-```bash
-# 1. Install dependencies
-pnpm install
-
-# 2. Start DynamoDB Local
-docker compose up -d
-
-# 3. Create tables (idempotent)
-pnpm db:local:init
-
-# 4a. Load seed data
-pnpm db:local:seed
-
-# 4b. Or ingest real data (instead of seed)
-pnpm db:ingest -- --path /path/to/positives/humpback/noaa_glacier_bay
-
-# 5. Start API server (watches for changes)
-# Set MEDIA_ROOT if using real data
-pnpm --filter @humpback/api dev
-
-# 6. In another terminal — start frontend (watches for changes)
-pnpm --filter @humpback/frontend dev
 ```
 
 ## Available Commands
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start full local stack (empty DB) |
-| `pnpm dev --seed` | Start full local stack with synthetic seed data |
-| `MEDIA_ROOT=... pnpm dev --ingest <path>` | Start stack and ingest real data from `<path>` |
+| `TIMELINE_EXPORT_ROOT=... pnpm dev:timeline` | Start the active timeline viewer against local exported artifacts |
 | `pnpm typecheck` | Run TypeScript checks across all packages |
 | `pnpm build` | Build all packages |
-| `pnpm test` | Run tests (requires local stack running) |
+| `pnpm test` | Run the active frontend Vitest suite for the timeline viewer |
+| `pnpm test:legacy` | Run the dormant API integration suite after starting its local stack |
+| `pnpm dev` | Start the dormant local annotation stack (empty DB) |
+| `pnpm dev --seed` | Start the dormant annotation stack with synthetic seed data |
+| `MEDIA_ROOT=... pnpm dev --ingest <path>` | Start the dormant stack and ingest real data from `<path>` |
 | `pnpm db:local:init` | Create DynamoDB tables (idempotent) |
 | `pnpm db:local:seed` | Load seed data into DynamoDB Local |
 | `pnpm db:ingest -- --path <dir>` | Ingest a single dataset directory |
 | `pnpm db:ingest -- --path <dir> --all` | Ingest all dataset subdirectories |
 | `pnpm db:ingest -- --path <dir> --dry-run` | Preview ingestion without writing |
 | `pnpm --filter @humpback/api dev` | Start API server only |
-| `pnpm --filter @humpback/frontend dev` | Start frontend only |
+| `pnpm --filter @humpback/frontend dev` | Start the timeline viewer frontend only |
 
 ## Local Development
 
-### Dev Auth
+### Timeline Data Contract
 
-The local dev server uses header-based authentication. The frontend includes a
-user picker in the top-right corner to switch between:
+The active frontend expects:
 
-- **dev_user_1** (annotator)
-- **dev_user_2** (annotator)
-- **admin_user** (admin)
+- `data/index.json` for the landing page registry
+- `data/{jobId}/manifest.json` for viewer metadata
+- `data/{jobId}/tiles/{zoom}/tile_0000.png` for spectrogram tiles
+- `data/{jobId}/audio/chunk_0000.mp3` for audio chunks
 
-Switching users reloads the page to reflect the new user's label state.
-
-### API Endpoints
-
-All API routes are prefixed with `/api` and require auth headers:
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/folders` | List folders |
-| GET | `/api/folders/:folderId/samples` | List samples (supports `?filter=labeled\|unlabeled\|all`) |
-| GET | `/api/samples/:sampleId` | Sample detail with conditional aggregate |
-| PUT | `/api/samples/:sampleId/label` | Submit/update label |
-| GET | `/api/samples/suggest-next?folderId=` | Get a random unlabeled sample |
-| GET | `/api/admin/labels` | Admin label reporting (admin role required) |
-| GET | `/health` | Health check (no auth) |
+Everything is fetched same-origin. The viewer does not proxy tiles, audio, or
+manifests through application compute.
 
 ### Environment Variables
 
@@ -136,14 +107,14 @@ out of the box:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `APP_ENV` | `local` | Environment mode |
+| `TIMELINE_EXPORT_ROOT` | unset | Local directory mounted at `/data` for the active timeline viewer |
 | `DYNAMODB_PORT` | `9000` | DynamoDB Local port |
 | `DYNAMODB_ENDPOINT` | `http://localhost:9000` | DynamoDB endpoint |
 | `CATALOG_TABLE` | `Catalog` | Catalog table name |
 | `LABELS_TABLE` | `Labels` | Labels table name |
-| `MEDIA_ROOT` | `./local_media` | Media root directory (set to data root for real data) |
+| `MEDIA_ROOT` | `./local_media` | Media root directory for the dormant annotation stack |
 | `FRONTEND_PORT` | `6173` | Frontend dev server port |
-| `AUTH_MODE` | `dev` | Auth mode (`dev` or `cognito`) |
+| `AUTH_MODE` | `dev` | Auth mode for the dormant API stack (`dev` or `cognito`) |
 | `AWS_REGION` | `us-west-2` | AWS region |
 | `API_PORT` | `3001` | API server port |
 
@@ -151,22 +122,15 @@ out of the box:
 
 ```
 humpback-annotation-app/
-  api/                  # Fastify API server + Lambda adapter
+  frontend/             # Active React + Vite timeline viewer
     src/
-      app.ts            # Fastify app (shared between local + Lambda)
-      server.ts         # Local dev server entry point
-      lambda.ts         # Lambda entry point (stub)
-      config.ts         # Environment config
-      types/            # Shared type definitions
-      data/             # DynamoDB data access layer
-      routes/           # Route handlers
-      plugins/          # Fastify plugins (auth)
-      lib/              # Utilities
-  frontend/             # React 19 + Vite
+      pages/            # Landing page + timeline viewer routes
+      components/       # Timeline UI components
+      api/              # Timeline registry / manifest loaders
+      lib/              # Contract, math, and cache utilities
+  api/                  # Dormant Fastify API server + Lambda adapter
     src/
-      pages/            # Route pages
-      components/       # UI components
-      api/              # API client modules
+      routes/           # Legacy annotation/catalog/admin routes
   scripts/              # Dev tooling scripts
   tests/                # Integration tests (Vitest)
   cdk/                  # Infrastructure (not yet implemented)
@@ -176,21 +140,11 @@ humpback-annotation-app/
 
 ## Running Tests
 
-Integration tests run against a live local stack:
-
-```bash
-# Start the stack first
-docker compose up -d
-pnpm db:local:init && pnpm db:local:seed
-pnpm --filter @humpback/api dev &
-
-# Run tests
-pnpm test
-```
-
-## Label Categories
-
-The V1 label set for whale vocalizations:
-
-`whup`, `grunt`, `ascending moan`, `descending moan`, `moan`, `upsweep`,
-`trumpet`, `growl`, `creak`, `buzz`, `shriek`, `chirp`
+- `pnpm test` runs the active frontend Vitest suite for timeline contract and
+  viewport utility coverage. It does not require DynamoDB Local or the dormant
+  API stack.
+- `pnpm test:legacy` runs the older integration suite in `tests/`. Use it only
+  when you are intentionally changing the dormant annotation/API path and have
+  started the required local services.
+- `pnpm typecheck` and `pnpm build` remain the baseline verification gates for
+  all meaningful changes.
