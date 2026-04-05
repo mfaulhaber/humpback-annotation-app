@@ -8,15 +8,18 @@ until they are migrated or superseded.
 
 ## Active
 
-# Plan: Adapt App for Real Whale Data Structure
+# Plan: Timeline Viewer MVP Pivot
 
-Detailed plan: `docs/plans/2026-04-05-real-whale-data-structure.md`
+Detailed plan: `docs/plans/2026-04-05-timeline-viewer-mvp.md`
 
 Focus:
-- Make spectrogramKey nullable across types, API, and frontend
-- Create data ingestion script for real folder structure (`[root]/positives/humpback/[dataset]/YYYY/MM/DD/`)
-- Support co-located audio + PNG files with timestamp-based filenames
-- Add `db:ingest` script with --dry-run, --all, --path flags
+- Replace the active annotation routes with a timeline-first landing page and
+  viewer
+- Serve exported artifacts from same-origin static `/data/*` paths in local
+  development and CloudFront/S3 deployment
+- Implement the readonly timeline workspace with zoom, playback, and overlay
+  layers
+- Keep the current annotation stack in-repo but hidden from the active UI
 
 ## Backlog
 
@@ -47,6 +50,12 @@ Focus:
 - environment promotion strategy
 
 ## Recently Completed
+
+- Adapt App for Real Whale Data Structure:
+  Detailed plan: `docs/plans/2026-04-05-real-whale-data-structure.md`
+  Implemented nullable spectrogram handling across the stack and added
+  real-data ingest support for dataset folders under
+  `[root]/positives/humpback/[dataset]/YYYY/MM/DD/`.
 
 - Add Environment Variables for Configurable Ports:
   Detailed plan: `~/.claude/plans/nested-crafting-fox.md`
