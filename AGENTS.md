@@ -59,6 +59,8 @@ workflow file in `docs/workflows/` with the detailed steps.
 - Treat a direct user invocation of `session-end` as approval and confirmation
   that the work is unblocked and that any intended manual verification is
   already complete unless the user explicitly says not to merge
+- Rename the conversation to the current feature branch name before returning
+  to `main` so past threads reflect the work that was actually done
 - Squash-merge the PR when mergeable
 - If branch protections, required checks, conflicts, or permissions block the
   merge, report the blocker instead of forcing around it

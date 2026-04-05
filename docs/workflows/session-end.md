@@ -44,12 +44,18 @@ returning to a clean `main` when the workflow is feature-branch based.
      the blocker instead of forcing around it
    - If merge succeeds, continue to the cleanup steps
 
-6. **Return to clean `main`**
+6. **Rename the conversation**
+   - If the task used a `feature/*` branch, rename the conversation to the
+     current branch name before switching away from it
+   - If the task was done directly on `main`, keep the current title unless a
+     clearer scoped title is obviously needed
+
+7. **Return to clean `main`**
    - `git checkout main`
    - `git pull --ff-only origin main` when `origin` exists
    - Delete the local feature branch after merge if it is safe to do so
 
-7. **Handle direct-to-main exceptions carefully**
+8. **Handle direct-to-main exceptions carefully**
    - If the task was intentionally performed on `main`, do not invent a PR-only
      requirement
    - Report the final status clearly instead
@@ -62,5 +68,6 @@ returning to a clean `main` when the workflow is feature-branch based.
 
 ## Output
 
-PR URL or final branch status, plus confirmation that local `main` is clean
-when that return step was performed.
+PR URL or final branch status, plus the final conversation title when it was
+updated and confirmation that local `main` is clean when that return step was
+performed.

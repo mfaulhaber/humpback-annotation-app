@@ -114,6 +114,9 @@ integration, deployed CDK stacks, CI/CD, and the cloud delivery pipeline.
   - `docs/specs/` for design specs on significant work
 - Implementation plans should live in `docs/plans/`.
 - Keep `.claude/commands/` and `docs/workflows/` in sync.
+- When a task uses a `feature/*` branch, `session-end` should rename the
+  conversation to that branch name before returning to `main` so thread history
+  stays tied to the implemented work.
 
 ### 3.6 Verification
 - Baseline verification for meaningful changes:
