@@ -29,14 +29,15 @@ Validation gate that must pass before `session-end` can proceed.
      `scripts/src/db-local-init.ts`, `MEMORY.md`, and `DECISIONS.md` updated?
    - Is automated coverage added or explicitly deferred with a reason when new
      logic is substantial?
-   - If `pnpm test` could not be run, is the missing coverage called out
-     clearly?
+   - If `pnpm test` or `pnpm test:legacy` could not be run when relevant, is
+     the missing coverage called out clearly?
 
 4. **Run verification gates**
    - `pnpm typecheck`
    - `pnpm build`
-   - `pnpm test` when the modified behavior is covered and required local
-     services are available
+   - `pnpm test` when the modified active frontend behavior is covered
+   - `pnpm test:legacy` when the modified dormant API or data behavior is
+     covered and required local services are available
    - Re-run manual smoke only for the relevant uncovered changed path
 
 5. **Report findings**

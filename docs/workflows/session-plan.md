@@ -30,8 +30,8 @@ non-trivial work, and keep repo-local planning artifacts aligned with
      - title
      - exact file paths to create or modify
      - acceptance criteria
-     - verification requirements, including `pnpm test` or manual smoke when
-       relevant
+     - verification requirements, including `pnpm test`, `pnpm test:legacy`,
+       or manual smoke when relevant
    - Note required doc or memory-file updates when the change affects
      architecture, workflows, data models, or implemented status
 
@@ -73,8 +73,10 @@ non-trivial work, and keep repo-local planning artifacts aligned with
 **Verification:**
 - `pnpm typecheck`
 - `pnpm build`
-- `pnpm test` when the touched API or data flow is covered and the local stack
-  is available
+- `pnpm test` when the touched active frontend or isolated package logic is
+  covered
+- `pnpm test:legacy` when the touched dormant API or data flow is covered and
+  the local stack is available
 - Manual smoke only for changed paths without credible automated coverage
 
 ---
@@ -84,9 +86,10 @@ non-trivial work, and keep repo-local planning artifacts aligned with
 Run after all tasks:
 1. `pnpm typecheck`
 2. `pnpm build`
-3. `pnpm test` when the touched behavior is covered and required local services
-   are available
-4. Manual smoke-test only the changed behavior that is not yet credibly covered
+3. `pnpm test` when the touched active frontend behavior is covered
+4. `pnpm test:legacy` when the touched dormant API or data behavior is covered
+   and required local services are available
+5. Manual smoke-test only the changed behavior that is not yet credibly covered
 ```
 
 ## Does NOT

@@ -1,19 +1,23 @@
-# Humpback Annotation App — Reference Memory
+# Humpback Timeline Viewer — Reference Memory
 
-Stable reference material for the whale annotation application. This file keeps
-the repo's current design assumptions in one place. For behavioral rules and
-repo conventions, see `CLAUDE.md`.
+Stable reference material for the active timeline viewer MVP and the dormant
+annotation stack retained in this repo. For behavioral rules and repo
+conventions, see `CLAUDE.md`.
 
 ---
 
 ## Project Snapshot
 
-- Domain: whale vocalization sample browsing and labeling
-- Primary user flows: browse, preview, label, reveal aggregate after labeling,
-  suggest next unlabeled sample, admin reporting
-- Current repo state: local skeleton application implemented across
-  `frontend/`, `api/`, `scripts/`, and `tests/`; production auth, deployment,
-  and CI/CD remain planned
+- Domain: humpback acoustic timeline browsing and inspection
+- Active user flows:
+  - browse exported jobs from a timeline registry
+  - inspect one job in a full-screen timeline viewer
+  - zoom, pan, and play chunked audio against static spectrogram tiles
+- Current repo state:
+  - active React/Vite timeline viewer implemented in `frontend/`
+  - dormant Fastify/DynamoDB annotation stack retained in `api/`, `scripts/`,
+    and `tests/`
+  - production auth, deployment, and CI/CD remain planned
 - Session workflow guidance now lives in `docs/workflows/` with matching
   `.claude/commands/` entrypoints and repo-local plan files in `docs/plans/`
 
@@ -52,31 +56,77 @@ humpback-annotation-app/
 └── dynamodb_query_cookbook.md
 ```
 
-## Planned System Shape
+## Current System Shape
 
 | Layer | Current design direction |
 |-------|--------------------------|
-| Frontend | Static web application served through a CDN |
-| Media | Public object storage for audio clips and spectrograms |
-| Backend | Authenticated serverless API |
-| Catalog | Metadata/query service for folders and samples |
-| Annotation | Label write path plus aggregate maintenance |
-| Suggestion | Select next unlabeled sample within scope |
-| Reporting | Admin-only label reporting and export |
-| Data Store | DynamoDB-style catalog and labels tables |
+| Frontend | Static React timeline viewer served through a CDN |
+| Timeline Data | Same-origin exported artifacts under `/data/*` |
+| Media | Public object storage for timeline audio chunks and spectrogram tiles |
+| Active Backend | None required for readonly timeline viewing |
+| Legacy Backend | Dormant Fastify API for folder/sample annotation flows |
+| Legacy Data Store | DynamoDB-style catalog and labels tables |
 | Auth | Managed user authentication with local dev auth override |
 | IaC | Cloud deployment via infrastructure-as-code |
 
-## Product Rules
+## Active Product Rules
 
-- One current label per sample per user
-- Aggregate percentages hidden until that user labels the sample
-- Users can browse without first labeling
-- Suggested-next is optional but in scope for V1
-- Media assets are public
-- Spectrograms are pre-rendered in V1
+- The active viewer is readonly
+- Landing page data comes from `/data/index.json`
+- Viewer data comes from `/data/{jobId}/manifest.json`
+- Tiles, audio chunks, and manifests stay URL-addressable and same-origin
+- Viewer time displays are UTC
+- The app must not proxy tiles or audio through compute
+- Legacy annotation semantics remain intact in dormant code when touched
 
-## Core Entities
+## Timeline Viewer Routes
+
+- `/`
+- `/:jobId`
+
+## Timeline Export Contract
+
+### Registry
+
+- `data/index.json`
+- shape:
+  - `timelines[]`
+  - `job_id`
+  - `hydrophone_name`
+  - `species`
+  - `start_timestamp`
+  - `end_timestamp`
+
+### Manifest
+
+- `data/{jobId}/manifest.json`
+- major sections:
+  - `job`
+  - `tiles`
+  - `audio`
+  - `confidence`
+  - `detections`
+  - `vocalization_labels`
+  - `vocalization_types`
+
+### Zoom Levels
+
+- `24h`
+- `6h`
+- `1h`
+- `15m`
+- `5m`
+- `1m`
+
+### Viewer Interaction Model
+
+- one centered playhead drives viewport state
+- panning changes `centerTimestamp`
+- playback advances `centerTimestamp`
+- tiles are selected by zoom level plus visible time range
+- confidence, detections, and vocalizations align to the same time axis
+
+## Legacy Annotation Entities
 
 ### Folder
 
@@ -125,7 +175,7 @@ Constraint:
 - `percentages_by_category` returned by API
 - `updated_at`
 
-## Planned API Surface
+## Legacy Annotation API Surface
 
 - `GET /folders`
 - `GET /folders/{folderId}/samples`
@@ -134,7 +184,7 @@ Constraint:
 - `PUT /samples/{sampleId}/label`
 - `GET /admin/labels`
 
-## Data Access Patterns
+## Legacy Annotation Data Access Patterns
 
 ### Folder browse
 
@@ -159,7 +209,7 @@ Constraint:
 - filter labels by user, sample, folder, category, and date range
 - avoid aggregate recomputation for routine reporting
 
-## DynamoDB Reference Design
+## Legacy DynamoDB Reference Design
 
 ### Table: Catalog
 
@@ -200,7 +250,7 @@ Item types and indexes:
 - `GSI1`: labels by sample using `GSI1PK = SAMPLE#{sample_id}`
 - `GSI2`: labels by folder/date using `GSI2PK = FOLDER#{folder_id}`
 
-## Label Write Rules
+## Legacy Label Write Rules
 
 ### First label
 
@@ -217,7 +267,7 @@ Item types and indexes:
 
 Treat the label write and aggregate update as one logical transaction.
 
-## Suggest-Next Strategy
+## Legacy Suggest-Next Strategy
 
 V1 design direction:
 
@@ -232,17 +282,25 @@ Possible selection policies:
 
 ## Local Development Reference
 
-Current local stack:
+Active local viewer path:
+
+- `TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline`
+- Vite mounts that directory at `/data/*`
+- No API or DynamoDB is required to view timelines locally
+
+Dormant annotation stack path:
 
 - React + Vite frontend dev server
 - Fastify API dev server
 - DynamoDB Local via Docker Compose
 - local media folder or external `MEDIA_ROOT`
 - scripts for table init, seed data, and real-data ingest
-- dev-auth headers plus the frontend user picker for local user simulation
+- dev-auth headers plus the dormant frontend user picker for local user
+  simulation
 
 Representative local environment variables:
 
+- `TIMELINE_EXPORT_ROOT=/path/to/export/data`
 - `APP_ENV=local`
 - `DYNAMODB_ENDPOINT=http://localhost:9000`
 - `CATALOG_TABLE=Catalog`
@@ -281,6 +339,7 @@ Bootstrap commands available today:
 - `pnpm typecheck`
 - `pnpm build`
 - `pnpm test`
+- `pnpm test:legacy`
 - `pnpm db:local:init`
 - `pnpm db:local:seed`
 - `pnpm db:ingest -- --path <dir>`
@@ -291,8 +350,9 @@ Current command behavior:
 - `pnpm dev` orchestrates DynamoDB Local, table initialization, and the local
   API + frontend dev servers
 - `pnpm typecheck` and `pnpm build` run across the workspace packages
-- `pnpm test` runs the Vitest integration suite and expects the local stack to
-  be available
+- `pnpm test` runs the active frontend Vitest suite for timeline viewer logic
+- `pnpm test:legacy` runs the dormant API integration suite and expects the
+  local stack to be available
 - `pnpm db:local:init` and `pnpm db:local:seed` create and populate local
   DynamoDB tables
 - `pnpm db:ingest` imports real dataset folders into the Catalog table

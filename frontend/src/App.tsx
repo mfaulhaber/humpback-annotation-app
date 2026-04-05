@@ -1,30 +1,16 @@
-import { Routes, Route } from "react-router-dom";
-import { FolderListPage } from "./pages/FolderListPage.js";
-import { SampleListPage } from "./pages/SampleListPage.js";
-import { SampleDetailPage } from "./pages/SampleDetailPage.js";
-import { DevUserPicker } from "./components/DevUserPicker.js";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { TimelineIndexPage } from "./pages/TimelineIndexPage.js";
+import { TimelineViewerPage } from "./pages/TimelineViewerPage.js";
 
 export function App() {
   return (
-    <div>
-      <header
-        style={{
-          padding: "12px 24px",
-          background: "#1a1a2e",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <strong style={{ fontSize: 16 }}>Humpback Annotation</strong>
-        <div style={{ flex: 1 }} />
-        <DevUserPicker />
-      </header>
+    <div className="timeline-app">
       <Routes>
-        <Route path="/" element={<FolderListPage />} />
-        <Route path="/folders/:folderId" element={<SampleListPage />} />
-        <Route path="/samples/:sampleId" element={<SampleDetailPage />} />
+        <Route path="/" element={<TimelineIndexPage />} />
+        <Route path="/folders/*" element={<Navigate replace to="/" />} />
+        <Route path="/samples/*" element={<Navigate replace to="/" />} />
+        <Route path="/:jobId" element={<TimelineViewerPage />} />
+        <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
     </div>
   );

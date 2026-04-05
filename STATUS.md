@@ -1,96 +1,83 @@
 # Project Status
 
-Current state of the Humpback Annotation App repository.
+Current state of the active timeline viewer MVP and the dormant annotation
+stack that remains in this repository.
 
 ---
 
 ## Phase
 
-Local skeleton application — all 6 phases complete.
+Timeline viewer MVP pivot implemented on the active frontend surface.
 
 ## Quick Start
 
 ```bash
 pnpm install
-pnpm dev --seed        # starts DynamoDB Local, API, and frontend
+TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
 # Open http://localhost:6173
 ```
 
 ## Implemented In This Repository
 
+### Active MVP Surface
+
+- React 19 + Vite timeline viewer with two active routes:
+  - `/` loads a timeline registry from `data/index.json`
+  - `/:jobId` loads a viewer manifest from `data/{jobId}/manifest.json`
+- Same-origin loading of static timeline artifacts:
+  - spectrogram tiles from `data/{jobId}/tiles/...`
+  - audio chunks from `data/{jobId}/audio/...`
+- Timeline workspace with:
+  - fixed center playhead
+  - zoom controls from `24h` through `1m`
+  - UTC time labeling
+  - confidence strip rendering
+  - detection overlay rendering
+  - toggleable vocalization overlay rendering
+  - chunk-based audio playback controls
+- Legacy annotation routes removed from the mounted frontend router so the old
+  UI is no longer reachable from the active app shell
+
+### Local Development for the Active MVP
+
+- `pnpm dev:timeline` starts the active frontend only
+- `TIMELINE_EXPORT_ROOT` mounts a local export directory at `/data/*`
+- Local and intended deployed URL shapes are aligned so the viewer consumes the
+  same paths in development and CloudFront/S3 hosting
+- `pnpm test` now runs frontend Vitest coverage for the active timeline viewer
+
+### Retained Legacy Annotation Stack
+
+- Fastify API with local dev server and Lambda adapter stub
+- DynamoDB-backed catalog and labeling data access
+- Dev-auth plugin, seed data, real-data ingest, and admin reporting routes
+- Folder/sample/detail annotation UI code retained in the repo but hidden from
+  the active router
+- Legacy integration tests remain available through `pnpm test:legacy`
+
 ### Design & Coordination
 
-- V1 architecture spec, technical design pack, local dev stack notes
-- DynamoDB schema design and query cookbook
+- Repo-local design spec and implementation plan for the timeline viewer pivot
 - Coordination files: AGENTS.md, CLAUDE.md, DECISIONS.md, MEMORY.md, PLANS.md,
   STATUS.md
 - Codex workflow docs in `docs/workflows/` with matching `.claude/commands/`
   entrypoints and `.agents/skills/` wrappers
-- Repo-local planning folders: `docs/plans/` for implementation plans and
-  `docs/specs/` for design specs
-
-### Foundation (Phase 1)
-
-- pnpm workspace: `frontend/`, `api/`, `cdk/`, `scripts/`, `tests/`
-- Node 22 pinning, shared TypeScript baseline (`tsconfig.base.json`)
-- Shared types in `api/src/types/` (entities, API shapes, DynamoDB items,
-  12 label categories, key builders)
-- Config module (`api/src/config.ts`), DynamoDB client (`api/src/lib/dynamo-client.ts`)
-- Docker Compose for DynamoDB Local (`docker-compose.yml`)
-- Table creation script (`scripts/src/db-local-init.ts`) — Catalog + Labels with GSIs
-- Seed data script (`scripts/src/db-local-seed.ts`) — 3 folders, 65 samples, 10 labels
-- Data ingestion script (`scripts/src/db-ingest.ts`) — ingests real whale data
-  from `[root]/positives/humpback/[dataset]/YYYY/MM/DD/` folder structure
-- Placeholder media in `local_media/`
-
-### API (Phases 2-3)
-
-- Fastify server with local dev server (`api/src/server.ts`) and Lambda adapter
-  stub (`api/src/lambda.ts`)
-- Dev auth plugin (`api/src/plugins/auth.ts`) — reads `x-dev-user`/`x-dev-role` headers
-- Catalog routes: `GET /api/folders`, `GET /api/folders/:folderId/samples`,
-  `GET /api/samples/:sampleId`
-- Annotation route: `PUT /api/samples/:sampleId/label` — TransactWriteItems for
-  atomic label + aggregate updates
-- Suggest-next route: `GET /api/samples/suggest-next?folderId=`
-- Admin route: `GET /api/admin/labels` — role-enforced, multiple filter modes
-- `isLabeledByUser` per sample, `?filter=labeled|unlabeled|all` with over-scan pagination
-- Conditional aggregate visibility (only after user labels)
-- Media URL resolver, local static file serving at `/media/`
-- Health check at `/health` (no auth)
-
-### Frontend (Phases 4-5)
-
-- React 19 + Vite with dev proxy to API
-- Folder list, sample grid, sample detail pages
-- Audio player and spectrogram display (with placeholder for missing spectrograms)
-- Label form with 12 categories, relabel support
-- Aggregate display with percentage bars (hidden until labeled)
-- Filter controls (all/labeled/unlabeled) on sample list
-- Suggest-next button navigates to unlabeled sample
-- Dev user picker in header (dev_user_1, dev_user_2, admin_user)
-
-### Developer Experience (Phase 6)
-
-- Unified `pnpm dev` — starts DynamoDB Local, inits tables, launches API + frontend
-- Vitest integration tests (`tests/src/api-integration.test.ts`)
-- `.env.local.example` with documented defaults
-- Configurable ports via env vars: `DYNAMODB_PORT` (default 9000),
-  `API_PORT` (default 3001), `FRONTEND_PORT` (default 6173)
 
 ## Not Yet Implemented
 
-- Infrastructure code (CDK stacks — separate plan)
+- Detection or vocalization label editing in the timeline viewer
+- Frontend component or end-to-end coverage for timeline viewer interactions
+- Timeline export generation inside this repository
+- CloudFront/S3/CDK deployment implementation for the new viewer
 - Authentication integration (Cognito — separate plan)
-- Deployment pipeline (separate plan)
 - CI configuration
-- Export reporting in admin UI
 
 ## Known Constraints and Guardrails
 
 - Optimize for low idle cost first
-- Media files are public assets, not proxied through application compute
-- V1 uses pre-rendered spectrogram images (nullable — some samples may lack spectrograms)
-- No relational database dependency planned for V1
-- Aggregate percentages stay hidden until a user labels the sample
-- One current label per sample per user remains a core product rule
+- Timeline manifests, tiles, and audio remain static same-origin assets
+- Application compute must not proxy viewer media bytes
+- Legacy annotation code remains in-repo but inactive in the active UI
+- Legacy annotation semantics still matter when working on dormant code:
+  one current label per sample per user and aggregate reveal only after the
+  current user labels
