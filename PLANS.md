@@ -2,11 +2,15 @@
 
 ---
 
+New detailed implementation plans should live in `docs/plans/`. Older
+`~/.claude/plans/...` references are retained below only as historical context
+until they are migrated or superseded.
+
 ## Active
 
 # Plan: Adapt App for Real Whale Data Structure
 
-Detailed plan: `~/.claude/plans/virtual-roaming-peach.md`
+Detailed plan: `docs/plans/2026-04-05-real-whale-data-structure.md`
 
 Focus:
 - Make spectrogramKey nullable across types, API, and frontend

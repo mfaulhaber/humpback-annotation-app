@@ -24,6 +24,10 @@ pnpm dev --seed        # starts DynamoDB Local, API, and frontend
 - DynamoDB schema design and query cookbook
 - Coordination files: AGENTS.md, CLAUDE.md, DECISIONS.md, MEMORY.md, PLANS.md,
   STATUS.md
+- Codex workflow docs in `docs/workflows/` with matching `.claude/commands/`
+  entrypoints and `.agents/skills/` wrappers
+- Repo-local planning folders: `docs/plans/` for implementation plans and
+  `docs/specs/` for design specs
 
 ### Foundation (Phase 1)
 
