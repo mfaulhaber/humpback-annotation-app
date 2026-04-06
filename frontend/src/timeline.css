@@ -1,17 +1,17 @@
 :root {
   color-scheme: dark;
   --timeline-bg: #041018;
-  --timeline-bg-elevated: rgba(10, 23, 35, 0.94);
-  --timeline-bg-panel: rgba(7, 16, 27, 0.92);
-  --timeline-border: rgba(110, 199, 184, 0.18);
-  --timeline-border-strong: rgba(110, 199, 184, 0.4);
+  --timeline-bg-elevated: rgba(8, 18, 30, 0.86);
+  --timeline-bg-panel: rgba(7, 16, 27, 0.78);
+  --timeline-border: rgba(110, 199, 184, 0.14);
+  --timeline-border-strong: rgba(110, 199, 184, 0.28);
   --timeline-text: #dbece6;
   --timeline-text-muted: #8cadb0;
   --timeline-text-soft: #6d9192;
   --timeline-accent: #72e0c0;
   --timeline-accent-strong: #48c6a6;
   --timeline-accent-warm: #f4c95d;
-  --timeline-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+  --timeline-shadow: 0 20px 54px rgba(0, 0, 0, 0.26);
   --timeline-radius: 24px;
 }
 
@@ -37,8 +37,8 @@ body {
   line-height: 1.5;
   color: var(--timeline-text);
   background:
-    radial-gradient(circle at top left, rgba(33, 103, 91, 0.22), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(255, 194, 92, 0.16), transparent 24%),
+    radial-gradient(circle at top left, rgba(33, 103, 91, 0.16), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(255, 194, 92, 0.08), transparent 24%),
     linear-gradient(180deg, #06141e 0%, #02070d 100%);
 }
 
@@ -89,7 +89,7 @@ a {
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  padding: 32px;
+  padding: 28px;
 }
 
 .timeline-index {
@@ -239,10 +239,10 @@ a {
 }
 
 .timeline-viewer {
-  max-width: 1460px;
+  max-width: 1540px;
   margin: 0 auto;
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .timeline-viewer__header,
@@ -259,7 +259,8 @@ a {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 22px 26px;
+  padding: 18px 22px;
+  background: linear-gradient(180deg, rgba(8, 18, 30, 0.76), rgba(6, 13, 22, 0.7));
 }
 
 .timeline-viewer__header-left {
@@ -271,10 +272,20 @@ a {
   color: var(--timeline-text-muted);
 }
 
+.timeline-viewer__meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(114, 224, 192, 0.12);
+  background: rgba(6, 15, 24, 0.56);
+}
+
 .timeline-stage {
   display: flex;
   gap: 14px;
-  padding: 18px;
+  padding: 12px 12px 10px;
+  background: linear-gradient(180deg, rgba(7, 15, 24, 0.78), rgba(6, 12, 20, 0.82));
 }
 
 .timeline-stage__y-axis {
@@ -289,6 +300,7 @@ a {
     "SFMono-Regular",
     monospace;
   font-size: 0.78rem;
+  opacity: 0.72;
 }
 
 .timeline-stage__y-axis span {
@@ -320,17 +332,19 @@ a {
   flex: 1;
   min-width: 0;
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .timeline-track {
   position: relative;
   min-height: 336px;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(109, 176, 170, 0.12);
   background:
-    linear-gradient(180deg, rgba(2, 7, 12, 0.96), rgba(7, 17, 29, 0.96)),
+    linear-gradient(180deg, rgba(4, 12, 20, 0.96), rgba(8, 18, 28, 0.96)),
     #050b12;
+  box-shadow: inset 0 1px 0 rgba(184, 230, 222, 0.04);
   cursor: grab;
   user-select: none;
 }
@@ -415,17 +429,17 @@ a {
 
 .timeline-tooltip {
   position: absolute;
-  max-width: 240px;
+  max-width: 180px;
   display: grid;
   gap: 4px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(5, 11, 18, 0.96);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.38);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(230, 245, 162, 0.22);
+  background: rgba(5, 12, 20, 0.92);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
   transform: translateY(-110%);
   pointer-events: none;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--timeline-text-muted);
 }
 
@@ -438,8 +452,9 @@ a {
   inset-block: 0;
   left: 50%;
   width: 0;
-  border-left: 2px solid var(--timeline-accent);
+  border-left: 2px solid #7df2dc;
   pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(125, 242, 220, 0.25));
 }
 
 .timeline-playhead__marker {
@@ -450,18 +465,21 @@ a {
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 8px solid var(--timeline-accent);
+  border-top: 8px solid #7df2dc;
 }
 
 .timeline-confidence-strip {
-  border-radius: 999px;
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(16, 28, 43, 0.88);
+  border: 1px solid rgba(145, 182, 122, 0.18);
+  background: rgba(10, 19, 29, 0.92);
 }
 
 .timeline-axis {
   position: relative;
-  height: 22px;
+  height: 28px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(114, 224, 192, 0.1);
   color: var(--timeline-text-soft);
   font-family:
     "IBM Plex Mono",
@@ -476,12 +494,14 @@ a {
   top: 0;
   transform: translateX(-50%);
   white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .timeline-controls {
   display: grid;
   gap: 14px;
-  padding: 18px 20px 20px;
+  padding: 14px 16px 16px;
+  background: linear-gradient(180deg, rgba(7, 16, 26, 0.74), rgba(6, 13, 21, 0.78));
 }
 
 .timeline-controls__zoom-row,
@@ -496,6 +516,7 @@ a {
 
 .timeline-controls__main-row {
   justify-content: space-between;
+  gap: 18px;
 }
 
 .timeline-chip,
@@ -520,10 +541,10 @@ a {
 }
 
 .timeline-chip {
-  padding: 6px 12px;
+  padding: 5px 11px;
   border-radius: 999px;
   border: 1px solid rgba(114, 224, 192, 0.12);
-  background: rgba(6, 17, 27, 0.94);
+  background: rgba(6, 17, 27, 0.72);
 }
 
 .timeline-chip--active,
@@ -541,7 +562,7 @@ a {
   justify-content: center;
   border-radius: 999px;
   border: 1px solid rgba(114, 224, 192, 0.12);
-  background: rgba(6, 17, 27, 0.94);
+  background: rgba(6, 17, 27, 0.72);
 }
 
 .timeline-play-button {
@@ -552,18 +573,25 @@ a {
   justify-content: center;
   padding: 0 18px;
   border-radius: 999px;
-  border: 1px solid rgba(114, 224, 192, 0.48);
-  background: rgba(39, 118, 106, 0.22);
+  border: 1px solid rgba(114, 224, 192, 0.34);
+  background: rgba(39, 118, 106, 0.18);
   color: var(--timeline-accent);
 }
 
 .timeline-status-pill {
   color: var(--timeline-text-soft);
-  background: rgba(6, 17, 27, 0.94);
+  background: rgba(6, 17, 27, 0.72);
 }
 
 .timeline-status-pill--clock {
-  color: var(--timeline-accent-warm);
+  color: #f4f8ff;
+  border-color: rgba(125, 242, 220, 0.2);
+  background: rgba(7, 24, 29, 0.72);
+}
+
+.timeline-status-pill--rate,
+.timeline-status-pill--range {
+  border-color: rgba(144, 183, 113, 0.16);
 }
 
 .timeline-hidden-audio {
@@ -576,7 +604,7 @@ a {
   }
 
   .timeline-stage {
-    padding: 14px;
+    padding: 10px;
   }
 
   .timeline-stage__y-axis {

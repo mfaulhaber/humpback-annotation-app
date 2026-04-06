@@ -33,9 +33,10 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
   - UTC time labeling
   - canvas-backed viewport rendering for the spectrogram track
   - live playback-clock-driven scrolling for smooth fine-zoom motion
-  - confidence strip rendering
-  - detection overlay rendering
-  - toggleable vocalization overlay rendering
+  - compact lower-edge confidence strip rendering in detection mode only
+  - full-height detection window indicators in detection mode
+  - exclusive detection or vocalization control modes
+  - compact bottom-up vocalization lanes with full-height vocalization window indicators
   - chunk-based audio playback controls
 - Legacy annotation routes removed from the mounted frontend router so the old
   UI is no longer reachable from the active app shell

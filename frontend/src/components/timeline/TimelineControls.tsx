@@ -16,8 +16,8 @@ interface TimelineControlsProps {
   onSkipForward: () => void;
   onTogglePlay: () => void;
   onCyclePlaybackRate: () => void;
-  onToggleDetections: () => void;
-  onToggleVocalizations: () => void;
+  onSelectDetections: () => void;
+  onSelectVocalizations: () => void;
   onZoomChange: (zoom: ZoomLevel) => void;
 }
 
@@ -35,8 +35,8 @@ export function TimelineControls({
   onSkipForward,
   onTogglePlay,
   onCyclePlaybackRate,
-  onToggleDetections,
-  onToggleVocalizations,
+  onSelectDetections,
+  onSelectVocalizations,
   onZoomChange,
 }: TimelineControlsProps) {
   const [displayTimestamp, setDisplayTimestamp] = useState(centerTimestamp);
@@ -110,7 +110,7 @@ export function TimelineControls({
           </span>
           <button
             type="button"
-            className="timeline-status-pill"
+            className="timeline-status-pill timeline-status-pill--rate"
             onClick={onCyclePlaybackRate}
             disabled={!canPlay}
           >
@@ -121,7 +121,7 @@ export function TimelineControls({
             className={`timeline-status-pill ${
               showDetections ? "timeline-status-pill--active" : ""
             }`}
-            onClick={onToggleDetections}
+            onClick={onSelectDetections}
           >
             Detections
           </button>
@@ -130,11 +130,13 @@ export function TimelineControls({
             className={`timeline-status-pill ${
               showVocalizations ? "timeline-status-pill--active" : ""
             }`}
-            onClick={onToggleVocalizations}
+            onClick={onSelectVocalizations}
           >
             Vocalizations
           </button>
-          <span className="timeline-status-pill">Freq: 0-3 kHz</span>
+          <span className="timeline-status-pill timeline-status-pill--range">
+            Freq: 0-3 kHz
+          </span>
         </div>
       </div>
     </div>

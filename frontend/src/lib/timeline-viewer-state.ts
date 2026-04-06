@@ -1,5 +1,7 @@
 const PLAYBACK_SYNC_EPSILON = 0.001;
 
+export type TimelineOverlayMode = "detections" | "vocalizations";
+
 export function shouldSyncCenterTimestampFromPlayback(
   centerTimestamp: number,
   playbackTimestamp: number,
@@ -11,4 +13,14 @@ export function shouldSyncCenterTimestampFromPlayback(
     !isViewportInteracting &&
     Math.abs(playbackTimestamp - centerTimestamp) > PLAYBACK_SYNC_EPSILON
   );
+}
+
+export function getOverlayVisibility(mode: TimelineOverlayMode): {
+  showDetections: boolean;
+  showVocalizations: boolean;
+} {
+  return {
+    showDetections: mode === "detections",
+    showVocalizations: mode === "vocalizations",
+  };
 }

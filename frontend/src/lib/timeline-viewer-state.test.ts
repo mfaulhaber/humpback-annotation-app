@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { shouldSyncCenterTimestampFromPlayback } from "./timeline-viewer-state.js";
+import {
+  getOverlayVisibility,
+  shouldSyncCenterTimestampFromPlayback,
+} from "./timeline-viewer-state.js";
 
 describe("timeline-viewer-state", () => {
   it("follows the playback clock while audio is playing", () => {
@@ -21,5 +24,19 @@ describe("timeline-viewer-state", () => {
     expect(shouldSyncCenterTimestampFromPlayback(120, 120.0005, true)).toBe(
       false,
     );
+  });
+
+  it("exposes an exclusive overlay mode for detections", () => {
+    expect(getOverlayVisibility("detections")).toEqual({
+      showDetections: true,
+      showVocalizations: false,
+    });
+  });
+
+  it("exposes an exclusive overlay mode for vocalizations", () => {
+    expect(getOverlayVisibility("vocalizations")).toEqual({
+      showDetections: false,
+      showVocalizations: true,
+    });
   });
 });

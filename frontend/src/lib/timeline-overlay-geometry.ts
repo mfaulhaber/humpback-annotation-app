@@ -2,8 +2,14 @@ import type {
   Detection,
   VocalizationLabel,
   VocalizationType,
+  ZoomLevel,
 } from "./timeline-contract.js";
-import { timeToPixel, type DetectionLane, type TimeRange, type VocalizationWindow } from "./timeline-math.js";
+import {
+  timeToPixel,
+  type DetectionLane,
+  type TimeRange,
+  type VocalizationLaneWindow,
+} from "./timeline-math.js";
 
 export interface DetectionDrawRect {
   detection: Detection;
@@ -22,9 +28,11 @@ export interface VocalizationDrawLabel {
   source: VocalizationLabel["source"];
   stroke: string;
   text: string;
+  textColor: string;
 }
 
 export interface VocalizationDrawWindow {
+  indicatorFill: string;
   key: string;
   labels: VocalizationDrawLabel[];
   width: number;
@@ -32,47 +40,32 @@ export interface VocalizationDrawWindow {
   y: number;
 }
 
-const LABEL_COLORS: Record<string, string> = {
-  background: "#8c97a8",
-  humpback: "#f0a449",
-  orca: "#4fa0ff",
-  ship: "#ef5a5a",
-};
-
-const VOCALIZATION_PALETTE = [
-  "#52b788",
-  "#4ea8de",
-  "#f4a261",
-  "#e76f51",
-  "#f6bd60",
-  "#c77dff",
-  "#90be6d",
-  "#f28482",
-  "#84a59d",
-  "#f5cac3",
+export const DETECTION_INDICATOR_FILL = "rgba(64, 224, 192, 0.25)";
+export const VOCALIZATION_INDICATOR_FILL = "rgba(168, 130, 220, 0.4)";
+export const VOCALIZATION_CHIP_HEIGHT = 14;
+export const VOCALIZATION_LANE_GAP = 6;
+export const LOWER_OVERLAY_STACK_BOTTOM_OFFSET = 46;
+export const VOCALIZATION_LABEL_PALETTE = [
+  "rgb(232, 121, 249)",
+  "rgb(125, 211, 252)",
+  "rgb(94, 234, 212)",
+  "rgb(251, 191, 36)",
+  "rgb(163, 230, 53)",
+  "rgb(196, 181, 253)",
+  "rgb(251, 113, 133)",
 ] as const;
 
 export function detectionColor(detection: Detection): string {
-  if (detection.label) {
-    return LABEL_COLORS[detection.label] ?? "#7fd6bc";
-  }
-
-  const alpha = 0.18 + detection.avg_confidence * 0.52;
-  return `rgba(142, 204, 193, ${alpha.toFixed(3)})`;
+  void detection;
+  return DETECTION_INDICATOR_FILL;
 }
 
 export function buildDetectionDrawRects(
   lanes: DetectionLane[],
   range: TimeRange,
   width: number,
-  overlayHeight = 92,
+  trackHeight: number,
 ): DetectionDrawRect[] {
-  const laneCount = Math.max(
-    1,
-    lanes.reduce((max, lane) => Math.max(max, lane.lane + 1), 1),
-  );
-  const laneHeight = Math.max(10, Math.floor((overlayHeight - 8) / laneCount));
-
   return lanes.map((lane) => {
     const x = timeToPixel(lane.detection.start_utc, range, width);
     const endX = timeToPixel(lane.detection.end_utc, range, width);
@@ -80,12 +73,12 @@ export function buildDetectionDrawRects(
     return {
       detection: lane.detection,
       fill: detectionColor(lane.detection),
-      height: Math.max(8, laneHeight - 3),
+      height: trackHeight,
       lane: lane.lane,
-      stroke: "rgba(255,255,255,0.18)",
-      width: Math.max(3, endX - x),
+      stroke: "rgba(0, 0, 0, 0)",
+      width: Math.max(4, endX - x),
       x,
-      y: 4 + lane.lane * laneHeight,
+      y: 0,
     };
   });
 }
@@ -94,13 +87,14 @@ export function findDetectionRectAtPoint(
   rects: DetectionDrawRect[],
   x: number,
   y: number,
+  tolerance = 4,
 ): DetectionDrawRect | null {
   return rects.find(
     (rect) =>
-      x >= rect.x &&
-      x <= rect.x + rect.width &&
-      y >= rect.y &&
-      y <= rect.y + rect.height,
+      x >= rect.x - tolerance &&
+      x <= rect.x + rect.width + tolerance &&
+      y >= rect.y - tolerance &&
+      y <= rect.y + rect.height + tolerance,
   ) ?? null;
 }
 
@@ -110,43 +104,93 @@ export function buildVocalizationColorMap(
   const colors = new Map<string, string>();
 
   types.forEach((entry, index) => {
-    colors.set(entry.name, VOCALIZATION_PALETTE[index % VOCALIZATION_PALETTE.length]!);
+    colors.set(
+      entry.name,
+      VOCALIZATION_LABEL_PALETTE[index % VOCALIZATION_LABEL_PALETTE.length]!,
+    );
   });
 
   return colors;
 }
 
+function shouldRenderVocalizationLabels(zoom: ZoomLevel): boolean {
+  return zoom === "5m" || zoom === "1m";
+}
+
+function formatVocalizationLabelText(type: string, zoom: ZoomLevel): string {
+  const trimmed = type.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (zoom === "5m") {
+    return `${trimmed.charAt(0).toUpperCase()}...`;
+  }
+
+  return trimmed;
+}
+
+function fallbackVocalizationColor(type: string): string {
+  const value = [...type].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return VOCALIZATION_LABEL_PALETTE[value % VOCALIZATION_LABEL_PALETTE.length]!;
+}
+
 export function buildVocalizationDrawWindows(
-  windows: VocalizationWindow[],
+  windows: VocalizationLaneWindow[],
   range: TimeRange,
   width: number,
   types: VocalizationType[],
+  trackHeight: number,
+  zoom: ZoomLevel,
 ): VocalizationDrawWindow[] {
   const colorByType = buildVocalizationColorMap(types);
+  const showLabels = shouldRenderVocalizationLabels(zoom);
+  const maxLabelsPerWindow = Math.max(
+    1,
+    ...windows.map((window) =>
+      showLabels ? Math.max(window.labels.length, 1) : 1,
+    ),
+  );
+  const stackBottom = Math.max(0, trackHeight - LOWER_OVERLAY_STACK_BOTTOM_OFFSET);
+  const laneBlockHeight =
+    maxLabelsPerWindow * VOCALIZATION_CHIP_HEIGHT +
+    (maxLabelsPerWindow - 1) * VOCALIZATION_LANE_GAP;
 
-  return windows.map((window, index) => {
+  return windows.map((window) => {
     const left = timeToPixel(window.start, range, width);
     const right = timeToPixel(window.end, range, width);
-    const chipRow = index % 4;
+    const labels = showLabels
+      ? window.labels
+          .map((label) => {
+            const accent =
+              colorByType.get(label.type) ?? fallbackVocalizationColor(label.type);
+            const text = formatVocalizationLabelText(label.type, zoom);
+            if (!text) {
+              return null;
+            }
+
+            return {
+              fill: "transparent",
+              key: `${window.key}:${label.type}:${label.source}`,
+              source: label.source,
+              stroke: accent,
+              text,
+              textColor: accent,
+            };
+          })
+          .filter((label): label is VocalizationDrawLabel => label != null)
+      : [];
 
     return {
+      indicatorFill: VOCALIZATION_INDICATOR_FILL,
       key: window.key,
-      labels: window.labels.map((label) => {
-        const stroke = colorByType.get(label.type) ?? "#7fd6bc";
-        return {
-          fill:
-            label.source === "manual"
-              ? `${stroke}22`
-              : "rgba(13, 25, 40, 0.88)",
-          key: `${window.key}:${label.type}:${label.source}`,
-          source: label.source,
-          stroke,
-          text: label.type,
-        };
-      }),
-      width: Math.max(12, right - left),
+      labels,
+      width: Math.max(24, right - left),
       x: Math.max(0, left),
-      y: 8 + chipRow * 28,
+      y:
+        stackBottom -
+        VOCALIZATION_CHIP_HEIGHT -
+        window.lane * (laneBlockHeight + VOCALIZATION_LANE_GAP),
     };
   });
 }

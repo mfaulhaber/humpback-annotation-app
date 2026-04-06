@@ -7,6 +7,7 @@ import {
 } from "../../lib/timeline-contract.js";
 import {
   buildDetectionLanes,
+  buildVocalizationLanes,
   formatAxisTimestamp,
   getTimeTicks,
   getViewportRange,
@@ -29,6 +30,7 @@ import { ConfidenceStrip } from "./ConfidenceStrip.js";
 
 interface TimelineViewportProps {
   centerTimestamp: number;
+  enableDetectionHover?: boolean;
   isPlaying: boolean;
   manifest: TimelineManifest;
   onInteractionChange?: (isInteracting: boolean) => void;
@@ -47,12 +49,11 @@ interface DragState {
 }
 
 const DRAG_THRESHOLD_PX = 4;
-const DETECTION_TOOLTIP_BAND_HEIGHT = 92;
-const DETECTION_TOOLTIP_BAND_OFFSET = 54;
 const viewportDebug = createDebugLogger("timeline:viewport");
 
 export function TimelineViewport({
   centerTimestamp,
+  enableDetectionHover = true,
   isPlaying,
   manifest,
   onInteractionChange,
@@ -127,19 +128,22 @@ export function TimelineViewport({
     manifest.vocalization_labels,
     range,
   );
+  const trackHeight = width < 700 ? 248 : 336;
   const detectionRects = showDetections
-    ? buildDetectionDrawRects(detectionLanes, range, width)
+    ? buildDetectionDrawRects(detectionLanes, range, width, trackHeight)
     : [];
+  const vocalizationLanes = buildVocalizationLanes(visibleVocalizationWindows);
   const vocalizationDrawWindows = showVocalizations
     ? buildVocalizationDrawWindows(
-        visibleVocalizationWindows,
+        vocalizationLanes,
         range,
         width,
         manifest.vocalization_types,
+        trackHeight,
+        zoom,
       )
     : [];
   const timeTicks = getTimeTicks(range, zoom);
-  const trackHeight = width < 700 ? 248 : 336;
   const visibleTileIndicesKey = visibleTileIndices.join(",");
   const hoveredDetection =
     hoveredDetectionId == null
@@ -149,10 +153,10 @@ export function TimelineViewport({
         ) ?? null;
 
   useEffect(() => {
-    if (!showDetections) {
+    if (!enableDetectionHover) {
       setHoveredDetectionId(null);
     }
-  }, [showDetections]);
+  }, [enableDetectionHover]);
 
   useEffect(() => {
     let cancelled = false;
@@ -278,7 +282,7 @@ export function TimelineViewport({
       return;
     }
 
-    if (!showDetections) {
+    if (!enableDetectionHover) {
       return;
     }
 
@@ -286,7 +290,7 @@ export function TimelineViewport({
     const nextHovered = findDetectionRectAtPoint(
       detectionRectsRef.current,
       event.clientX - bounds.left,
-      event.clientY - bounds.top - Math.max(0, trackHeight - DETECTION_TOOLTIP_BAND_HEIGHT - DETECTION_TOOLTIP_BAND_OFFSET),
+      event.clientY - bounds.top,
     );
     setHoveredDetectionId(nextHovered ? nextHovered.detection.row_id : null);
   }
@@ -381,18 +385,12 @@ export function TimelineViewport({
             <span className="timeline-playhead__marker" />
           </div>
 
-          {hoveredDetection ? (
+          {enableDetectionHover && hoveredDetection ? (
             <div
               className="timeline-tooltip"
               style={{
-                left: `${hoveredDetection.x}px`,
-                top: `${Math.max(
-                  8,
-                  trackHeight -
-                    DETECTION_TOOLTIP_BAND_HEIGHT -
-                    DETECTION_TOOLTIP_BAND_OFFSET +
-                    hoveredDetection.y,
-                )}px`,
+                left: `${Math.min(width - 184, Math.max(10, hoveredDetection.x - 10))}px`,
+                top: "12px",
               }}
             >
               <strong>{hoveredDetection.detection.label ?? "Unlabeled"}</strong>
@@ -404,12 +402,14 @@ export function TimelineViewport({
           ) : null}
         </div>
 
-        <ConfidenceStrip
-          confidence={manifest.confidence}
-          range={range}
-          startTimestamp={manifest.job.start_timestamp}
-          width={width}
-        />
+        {showDetections ? (
+          <ConfidenceStrip
+            confidence={manifest.confidence}
+            range={range}
+            startTimestamp={manifest.job.start_timestamp}
+            width={width}
+          />
+        ) : null}
 
         <TimeAxis range={range} ticks={timeTicks} width={width} zoom={zoom} />
       </div>
