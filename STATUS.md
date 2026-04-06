@@ -31,6 +31,8 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
   - fixed center playhead
   - zoom controls from `24h` through `1m`
   - UTC time labeling
+  - canvas-backed viewport rendering for the spectrogram track
+  - live playback-clock-driven scrolling for smooth fine-zoom motion
   - confidence strip rendering
   - detection overlay rendering
   - toggleable vocalization overlay rendering

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ZOOM_LEVELS, type ZoomLevel } from "../../lib/timeline-contract.js";
 import { formatUtcTimestamp } from "../../lib/timeline-math.js";
 
@@ -6,6 +7,7 @@ interface TimelineControlsProps {
   centerTimestamp: number;
   isPlaying: boolean;
   playbackRate: number;
+  readLiveTimestamp: () => number;
   showDetections: boolean;
   showVocalizations: boolean;
   zoom: ZoomLevel;
@@ -24,6 +26,7 @@ export function TimelineControls({
   centerTimestamp,
   isPlaying,
   playbackRate,
+  readLiveTimestamp,
   showDetections,
   showVocalizations,
   zoom,
@@ -36,6 +39,24 @@ export function TimelineControls({
   onToggleVocalizations,
   onZoomChange,
 }: TimelineControlsProps) {
+  const [displayTimestamp, setDisplayTimestamp] = useState(centerTimestamp);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setDisplayTimestamp(centerTimestamp);
+      return;
+    }
+
+    let frameId = 0;
+    const tick = () => {
+      setDisplayTimestamp(readLiveTimestamp());
+      frameId = window.requestAnimationFrame(tick);
+    };
+
+    tick();
+    return () => window.cancelAnimationFrame(frameId);
+  }, [centerTimestamp, isPlaying, readLiveTimestamp]);
+
   return (
     <div className="timeline-controls">
       <div className="timeline-controls__zoom-row">
@@ -85,7 +106,7 @@ export function TimelineControls({
 
         <div className="timeline-controls__status">
           <span className="timeline-status-pill timeline-status-pill--clock">
-            {formatUtcTimestamp(centerTimestamp)}
+            {formatUtcTimestamp(displayTimestamp)}
           </span>
           <button
             type="button"

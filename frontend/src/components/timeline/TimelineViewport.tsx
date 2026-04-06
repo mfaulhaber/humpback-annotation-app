@@ -17,20 +17,27 @@ import {
   timeToPixel,
   type TimeRange,
 } from "../../lib/timeline-math.js";
+import { drawTimelineCanvas } from "../../lib/timeline-canvas-renderer.js";
 import { createDebugLogger } from "../../lib/debug-log.js";
+import {
+  buildDetectionDrawRects,
+  buildVocalizationDrawWindows,
+  findDetectionRectAtPoint,
+} from "../../lib/timeline-overlay-geometry.js";
 import { timelineTileCache } from "../../lib/tile-cache.js";
 import { ConfidenceStrip } from "./ConfidenceStrip.js";
-import { DetectionOverlay } from "./DetectionOverlay.js";
-import { VocalizationOverlay } from "./VocalizationOverlay.js";
 
 interface TimelineViewportProps {
   centerTimestamp: number;
+  isPlaying: boolean;
   manifest: TimelineManifest;
+  onInteractionChange?: (isInteracting: boolean) => void;
   showDetections: boolean;
   showVocalizations: boolean;
   zoom: ZoomLevel;
   onCenterTimestampCommit: (timestamp: number) => void;
   onCenterTimestampPreview: (timestamp: number) => void;
+  readLiveTimestamp: () => number;
 }
 
 interface DragState {
@@ -40,22 +47,33 @@ interface DragState {
 }
 
 const DRAG_THRESHOLD_PX = 4;
+const DETECTION_TOOLTIP_BAND_HEIGHT = 92;
+const DETECTION_TOOLTIP_BAND_OFFSET = 54;
 const viewportDebug = createDebugLogger("timeline:viewport");
 
 export function TimelineViewport({
   centerTimestamp,
+  isPlaying,
   manifest,
+  onInteractionChange,
   showDetections,
   showVocalizations,
   zoom,
   onCenterTimestampCommit,
   onCenterTimestampPreview,
+  readLiveTimestamp,
 }: TimelineViewportProps) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragExceededThresholdRef = useRef(false);
   const suppressNextClickRef = useRef(false);
+  const displayCenterTimestampRef = useRef(centerTimestamp);
+  const detectionRectsRef = useRef<ReturnType<typeof buildDetectionDrawRects>>([]);
   const [width, setWidth] = useState(0);
+  const [displayCenterTimestamp, setDisplayCenterTimestamp] = useState(centerTimestamp);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [hoveredDetectionId, setHoveredDetectionId] = useState<string | null>(null);
+  const [tileLoadVersion, setTileLoadVersion] = useState(0);
 
   useEffect(() => {
     const element = trackRef.current;
@@ -72,24 +90,142 @@ export function TimelineViewport({
     return () => observer.disconnect();
   }, []);
 
-  const range = getViewportRange(manifest, zoom, centerTimestamp);
+  useEffect(() => {
+    displayCenterTimestampRef.current = displayCenterTimestamp;
+  }, [displayCenterTimestamp]);
+
+  useEffect(() => {
+    if (dragState) {
+      return;
+    }
+
+    if (!isPlaying) {
+      setDisplayCenterTimestamp(centerTimestamp);
+      return;
+    }
+
+    let frameId = 0;
+    const tick = () => {
+      const nextTimestamp = readLiveTimestamp();
+      setDisplayCenterTimestamp((current) =>
+        Math.abs(current - nextTimestamp) > 0.0005 ? nextTimestamp : current,
+      );
+      frameId = window.requestAnimationFrame(tick);
+    };
+
+    tick();
+    return () => window.cancelAnimationFrame(frameId);
+  }, [centerTimestamp, dragState, isPlaying, readLiveTimestamp]);
+
+  useEffect(() => () => onInteractionChange?.(false), [onInteractionChange]);
+
+  const range = getViewportRange(manifest, zoom, displayCenterTimestamp);
   const visibleTileIndices = getVisibleTileIndices(manifest, zoom, range, 2);
   const visibleDetections = getVisibleDetections(manifest.detections, range);
   const detectionLanes = buildDetectionLanes(visibleDetections);
-  const vocalizationWindows = getVisibleVocalizationWindows(
+  const visibleVocalizationWindows = getVisibleVocalizationWindows(
     manifest.vocalization_labels,
     range,
   );
+  const detectionRects = showDetections
+    ? buildDetectionDrawRects(detectionLanes, range, width)
+    : [];
+  const vocalizationDrawWindows = showVocalizations
+    ? buildVocalizationDrawWindows(
+        visibleVocalizationWindows,
+        range,
+        width,
+        manifest.vocalization_types,
+      )
+    : [];
   const timeTicks = getTimeTicks(range, zoom);
-  const spectrogramHeight = width < 700 ? 248 : 336;
+  const trackHeight = width < 700 ? 248 : 336;
+  const visibleTileIndicesKey = visibleTileIndices.join(",");
+  const hoveredDetection =
+    hoveredDetectionId == null
+      ? null
+      : detectionRects.find(
+          (rect) => rect.detection.row_id === hoveredDetectionId,
+        ) ?? null;
 
   useEffect(() => {
+    if (!showDetections) {
+      setHoveredDetectionId(null);
+    }
+  }, [showDetections]);
+
+  useEffect(() => {
+    let cancelled = false;
+
     visibleTileIndices.forEach((index) => {
-      void timelineTileCache.load(tilePath(manifest.job.id, zoom, index)).catch(() => {
-        // Broken tile URLs still leave the rest of the viewport usable.
-      });
+      void timelineTileCache
+        .load(tilePath(manifest.job.id, zoom, index))
+        .then(() => {
+          if (!cancelled) {
+            setTileLoadVersion((current) => current + 1);
+          }
+        })
+        .catch(() => {
+          // Broken tile URLs still leave the rest of the viewport usable.
+        });
     });
-  }, [manifest.job.id, visibleTileIndices, zoom]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [manifest.job.id, visibleTileIndicesKey, zoom]);
+
+  useEffect(() => {
+    detectionRectsRef.current = detectionRects;
+  }, [detectionRects]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || width <= 0) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const pixelRatio = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(width * pixelRatio);
+    canvas.height = Math.floor(trackHeight * pixelRatio);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${trackHeight}px`;
+
+    drawTimelineCanvas(context, {
+      detectionRects,
+      height: trackHeight,
+      pixelRatio,
+      tileItems: visibleTileIndices.map((index) => {
+        const currentTilePath = tilePath(manifest.job.id, zoom, index);
+        const tileRange = tileTimeRange(manifest, zoom, index);
+        const left = timeToPixel(tileRange.start, range, width);
+        const right = timeToPixel(tileRange.end, range, width);
+
+        return {
+          image: timelineTileCache.peek(currentTilePath),
+          width: Math.max(2, right - left),
+          x: left,
+        };
+      }),
+      vocalizationWindows: vocalizationDrawWindows,
+      width,
+    });
+  }, [
+    detectionRects,
+    manifest,
+    range,
+    tileLoadVersion,
+    trackHeight,
+    visibleTileIndices,
+    vocalizationDrawWindows,
+    width,
+    zoom,
+  ]);
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>): void {
     const element = trackRef.current;
@@ -103,10 +239,12 @@ export function TimelineViewport({
     setDragState({
       pointerId: event.pointerId,
       startX: event.clientX,
-      startCenterTimestamp: centerTimestamp,
+      startCenterTimestamp: displayCenterTimestampRef.current,
     });
+    setHoveredDetectionId(null);
+    onInteractionChange?.(true);
     viewportDebug("drag-start", {
-      centerTimestamp,
+      centerTimestamp: displayCenterTimestampRef.current,
       pointerId: event.pointerId,
       width,
       zoom,
@@ -114,17 +252,43 @@ export function TimelineViewport({
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
-    if (!dragState || dragState.pointerId !== event.pointerId || width <= 0) {
+    if (width <= 0) {
       return;
     }
 
-    const deltaX = event.clientX - dragState.startX;
-    if (Math.abs(deltaX) >= DRAG_THRESHOLD_PX) {
-      dragExceededThresholdRef.current = true;
+    if (dragState && dragState.pointerId === event.pointerId) {
+      const deltaX = event.clientX - dragState.startX;
+      if (Math.abs(deltaX) >= DRAG_THRESHOLD_PX) {
+        dragExceededThresholdRef.current = true;
+      }
+
+      const deltaSeconds = (-deltaX / width) * range.span;
+      const previewTimestamp = pixelToTimestamp(
+        width / 2 - deltaX,
+        getViewportRange(manifest, zoom, dragState.startCenterTimestamp),
+        width,
+      );
+      const nextTimestamp = Math.min(
+        manifest.job.end_timestamp,
+        Math.max(manifest.job.start_timestamp, previewTimestamp),
+      );
+
+      setDisplayCenterTimestamp(nextTimestamp);
+      onCenterTimestampPreview(nextTimestamp);
+      return;
     }
 
-    const deltaSeconds = (-deltaX / width) * range.span;
-    onCenterTimestampPreview(dragState.startCenterTimestamp + deltaSeconds);
+    if (!showDetections) {
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const nextHovered = findDetectionRectAtPoint(
+      detectionRectsRef.current,
+      event.clientX - bounds.left,
+      event.clientY - bounds.top - Math.max(0, trackHeight - DETECTION_TOOLTIP_BAND_HEIGHT - DETECTION_TOOLTIP_BAND_OFFSET),
+    );
+    setHoveredDetectionId(nextHovered ? nextHovered.detection.row_id : null);
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>): void {
@@ -134,23 +298,37 @@ export function TimelineViewport({
 
     if (dragExceededThresholdRef.current) {
       const deltaX = event.clientX - dragState.startX;
-      const deltaSeconds = (-deltaX / width) * range.span;
+      const previewTimestamp = pixelToTimestamp(
+        width / 2 - deltaX,
+        getViewportRange(manifest, zoom, dragState.startCenterTimestamp),
+        width,
+      );
+      const committedTimestamp = Math.min(
+        manifest.job.end_timestamp,
+        Math.max(manifest.job.start_timestamp, previewTimestamp),
+      );
       viewportDebug("drag-commit", {
-        committedTimestamp: dragState.startCenterTimestamp + deltaSeconds,
-        deltaSeconds,
+        committedTimestamp,
         deltaX,
         pointerId: event.pointerId,
         startCenterTimestamp: dragState.startCenterTimestamp,
         width,
         zoom,
       });
-      onCenterTimestampCommit(dragState.startCenterTimestamp + deltaSeconds);
+      onCenterTimestampCommit(committedTimestamp);
       suppressNextClickRef.current = true;
     }
 
     dragExceededThresholdRef.current = false;
     setDragState(null);
+    onInteractionChange?.(false);
     trackRef.current?.releasePointerCapture(event.pointerId);
+  }
+
+  function handlePointerLeave(): void {
+    if (!dragState) {
+      setHoveredDetectionId(null);
+    }
   }
 
   function handleClick(event: React.MouseEvent<HTMLDivElement>): void {
@@ -188,38 +366,42 @@ export function TimelineViewport({
         <div
           ref={trackRef}
           className={`timeline-track ${dragState ? "timeline-track--dragging" : ""}`}
+          style={{ height: `${trackHeight}px`, minHeight: `${trackHeight}px` }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          onPointerLeave={handlePointerLeave}
           onClick={handleClick}
           role="presentation"
         >
-          <SpectrogramTiles
-            height={spectrogramHeight}
-            manifest={manifest}
-            range={range}
-            tileIndices={visibleTileIndices}
-            width={width}
-            zoom={zoom}
-          />
-
-          {showDetections ? (
-            <DetectionOverlay lanes={detectionLanes} range={range} width={width} />
-          ) : null}
-
-          {showVocalizations ? (
-            <VocalizationOverlay
-              range={range}
-              types={manifest.vocalization_types}
-              width={width}
-              windows={vocalizationWindows}
-            />
-          ) : null}
+          <canvas ref={canvasRef} className="timeline-track__canvas" aria-hidden="true" />
 
           <div className="timeline-playhead" aria-hidden="true">
             <span className="timeline-playhead__marker" />
           </div>
+
+          {hoveredDetection ? (
+            <div
+              className="timeline-tooltip"
+              style={{
+                left: `${hoveredDetection.x}px`,
+                top: `${Math.max(
+                  8,
+                  trackHeight -
+                    DETECTION_TOOLTIP_BAND_HEIGHT -
+                    DETECTION_TOOLTIP_BAND_OFFSET +
+                    hoveredDetection.y,
+                )}px`,
+              }}
+            >
+              <strong>{hoveredDetection.detection.label ?? "Unlabeled"}</strong>
+              <span>
+                Avg {Math.round(hoveredDetection.detection.avg_confidence * 100)}% /
+                Peak {Math.round(hoveredDetection.detection.peak_confidence * 100)}%
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <ConfidenceStrip
@@ -232,49 +414,6 @@ export function TimelineViewport({
         <TimeAxis range={range} ticks={timeTicks} width={width} zoom={zoom} />
       </div>
     </section>
-  );
-}
-
-interface SpectrogramTilesProps {
-  height: number;
-  manifest: TimelineManifest;
-  range: TimeRange;
-  tileIndices: number[];
-  width: number;
-  zoom: ZoomLevel;
-}
-
-function SpectrogramTiles({
-  height,
-  manifest,
-  range,
-  tileIndices,
-  width,
-  zoom,
-}: SpectrogramTilesProps) {
-  return (
-    <div className="timeline-spectrogram" style={{ height: `${height}px` }}>
-      <div className="timeline-spectrogram__grid" aria-hidden="true" />
-      {tileIndices.map((index) => {
-        const tileRange = tileTimeRange(manifest, zoom, index);
-        const left = timeToPixel(tileRange.start, range, width);
-        const right = timeToPixel(tileRange.end, range, width);
-
-        return (
-          <img
-            key={`${zoom}:${index}`}
-            src={tilePath(manifest.job.id, zoom, index)}
-            alt=""
-            className="timeline-spectrogram__tile"
-            draggable={false}
-            style={{
-              left: `${left}px`,
-              width: `${Math.max(2, right - left)}px`,
-            }}
-          />
-        );
-      })}
-    </div>
   );
 }
 

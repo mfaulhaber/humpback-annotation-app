@@ -335,6 +335,12 @@ a {
   user-select: none;
 }
 
+.timeline-track__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .timeline-track--dragging {
   cursor: grabbing;
 }
