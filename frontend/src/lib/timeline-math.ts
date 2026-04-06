@@ -20,6 +20,10 @@ export interface VocalizationWindow {
   labels: VocalizationLabel[];
 }
 
+export interface VocalizationLaneWindow extends VocalizationWindow {
+  lane: number;
+}
+
 export interface DetectionLane {
   detection: Detection;
   lane: number;
@@ -148,6 +152,36 @@ export function buildDetectionLanes(
     }
 
     lanes.push({ detection, lane: laneIndex });
+  }
+
+  return lanes;
+}
+
+export function buildVocalizationLanes(
+  windows: VocalizationWindow[],
+): VocalizationLaneWindow[] {
+  const sorted = [...windows].sort((left, right) => {
+    if (left.start !== right.start) {
+      return left.start - right.start;
+    }
+
+    return left.end - right.end;
+  });
+
+  const laneEnds: number[] = [];
+  const lanes: VocalizationLaneWindow[] = [];
+
+  for (const window of sorted) {
+    let laneIndex = laneEnds.findIndex((laneEnd) => laneEnd <= window.start);
+
+    if (laneIndex === -1) {
+      laneIndex = laneEnds.length;
+      laneEnds.push(window.end);
+    } else {
+      laneEnds[laneIndex] = window.end;
+    }
+
+    lanes.push({ ...window, lane: laneIndex });
   }
 
   return lanes;

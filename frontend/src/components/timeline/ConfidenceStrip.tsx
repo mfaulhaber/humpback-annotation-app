@@ -11,14 +11,11 @@ interface ConfidenceStripProps {
 }
 
 const GRADIENT_STOPS = [
-  { score: 0, color: [26, 26, 46] },
-  { score: 0.15, color: [22, 33, 62] },
-  { score: 0.3, color: [15, 52, 96] },
-  { score: 0.45, color: [45, 106, 79] },
-  { score: 0.6, color: [82, 183, 136] },
-  { score: 0.75, color: [149, 213, 178] },
-  { score: 0.85, color: [244, 211, 94] },
-  { score: 1, color: [249, 229, 71] },
+  { score: 0, color: [52, 71, 34] },
+  { score: 0.25, color: [103, 148, 66] },
+  { score: 0.5, color: [159, 206, 93] },
+  { score: 0.75, color: [201, 232, 107] },
+  { score: 1, color: [240, 243, 111] },
 ] as const;
 
 function interpolateColor(score: number): string {
@@ -58,7 +55,7 @@ export function ConfidenceStrip({
       return;
     }
 
-    const height = 22;
+    const height = 14;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
@@ -72,7 +69,7 @@ export function ConfidenceStrip({
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, width, height);
-    context.fillStyle = "rgba(20, 34, 54, 0.9)";
+    context.fillStyle = "rgba(10, 19, 29, 0.92)";
     context.fillRect(0, 0, width, height);
 
     const windowSeconds = confidence.window_sec;
@@ -94,7 +91,7 @@ export function ConfidenceStrip({
       const segmentWidth = Math.max(1, nextX - x);
 
       context.fillStyle =
-        score == null ? "rgba(90, 122, 150, 0.14)" : interpolateColor(score);
+        score == null ? "rgba(84, 103, 70, 0.22)" : interpolateColor(score);
       context.fillRect(x, 0, segmentWidth + 1, height);
     }
   }, [confidence, range, startTimestamp, width]);

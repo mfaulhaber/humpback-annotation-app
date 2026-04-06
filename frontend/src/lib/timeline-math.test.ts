@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildDetectionLanes,
+  buildVocalizationLanes,
   deriveTimelineTitle,
   formatDurationShort,
   getViewportRange,
@@ -72,6 +73,53 @@ describe("timeline-math", () => {
       end: 1_711_930_060,
     });
     expect(windows[0]?.labels).toHaveLength(2);
+  });
+
+  it("packs overlapping vocalization windows into deterministic lower lanes", () => {
+    const lanes = buildVocalizationLanes([
+      {
+        key: "first",
+        start: 10,
+        end: 40,
+        labels: [],
+      },
+      {
+        key: "second",
+        start: 20,
+        end: 30,
+        labels: [],
+      },
+      {
+        key: "third",
+        start: 45,
+        end: 60,
+        labels: [],
+      },
+    ]);
+
+    expect(lanes).toEqual([
+      {
+        key: "first",
+        start: 10,
+        end: 40,
+        labels: [],
+        lane: 0,
+      },
+      {
+        key: "second",
+        start: 20,
+        end: 30,
+        labels: [],
+        lane: 1,
+      },
+      {
+        key: "third",
+        start: 45,
+        end: 60,
+        labels: [],
+        lane: 0,
+      },
+    ]);
   });
 
   it("formats viewer-facing labels from timeline metadata", () => {

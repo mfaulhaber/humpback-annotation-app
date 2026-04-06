@@ -19,7 +19,11 @@ import {
   getPanStepSeconds,
 } from "../lib/timeline-math.js";
 import { createDebugLogger } from "../lib/debug-log.js";
-import { shouldSyncCenterTimestampFromPlayback } from "../lib/timeline-viewer-state.js";
+import {
+  getOverlayVisibility,
+  type TimelineOverlayMode,
+  shouldSyncCenterTimestampFromPlayback,
+} from "../lib/timeline-viewer-state.js";
 
 const viewerDebug = createDebugLogger("timeline:viewer");
 
@@ -30,11 +34,16 @@ export function TimelineViewerPage() {
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState<ZoomLevel>("1m");
   const [centerTimestamp, setCenterTimestamp] = useState(0);
-  const [showDetections, setShowDetections] = useState(true);
-  const [showVocalizations, setShowVocalizations] = useState(true);
+  const [overlayMode, setOverlayMode] =
+    useState<TimelineOverlayMode>("detections");
   const [isViewportInteracting, setIsViewportInteracting] = useState(false);
 
   const playback = useTimelinePlayback(manifest);
+  const {
+    showDetections: isDetectionMode,
+    showVocalizations,
+  } =
+    getOverlayVisibility(overlayMode);
 
   useEffect(() => {
     if (!jobId) {
@@ -248,6 +257,7 @@ export function TimelineViewerPage() {
               Back to jobs
             </Link>
             <div>
+              <div className="timeline-kicker">Readonly timeline</div>
               <h1>{manifest.job.hydrophone_name}</h1>
               <p>
                 {formatSpeciesLabel(manifest.job.species)} / {manifest.job.model_name}{" "}
@@ -256,17 +266,22 @@ export function TimelineViewerPage() {
             </div>
           </div>
           <div className="timeline-viewer__header-right">
-            <span>{formatTimelineSpan(manifest.job.start_timestamp, manifest.job.end_timestamp)}</span>
-            <span>Window selection: {manifest.job.window_selection}</span>
+            <span className="timeline-viewer__meta-pill">
+              {formatTimelineSpan(manifest.job.start_timestamp, manifest.job.end_timestamp)}
+            </span>
+            <span className="timeline-viewer__meta-pill">
+              Window selection: {manifest.job.window_selection}
+            </span>
           </div>
         </header>
 
         <TimelineViewport
           centerTimestamp={centerTimestamp}
+          enableDetectionHover={isDetectionMode}
           isPlaying={playback.isPlaying}
           manifest={manifest}
           onInteractionChange={setIsViewportInteracting}
-          showDetections={showDetections}
+          showDetections={isDetectionMode}
           showVocalizations={showVocalizations}
           zoom={zoom}
           onCenterTimestampCommit={(timestamp) => {
@@ -283,7 +298,7 @@ export function TimelineViewerPage() {
           isPlaying={playback.isPlaying}
           playbackRate={playback.playbackRate}
           readLiveTimestamp={playback.readLiveTimestamp}
-          showDetections={showDetections}
+          showDetections={isDetectionMode}
           showVocalizations={showVocalizations}
           zoom={zoom}
           onCyclePlaybackRate={playback.cyclePlaybackRate}
@@ -299,7 +314,7 @@ export function TimelineViewerPage() {
               : centerTimestamp;
             void handleSeek(baseTimestamp + getPanStepSeconds(zoom));
           }}
-          onToggleDetections={() => setShowDetections((current) => !current)}
+          onSelectDetections={() => setOverlayMode("detections")}
           onTogglePlay={() => {
             const interactionTimestamp = playback.isPlaying
               ? playback.readLiveTimestamp()
@@ -312,7 +327,7 @@ export function TimelineViewerPage() {
             });
             void playback.togglePlay(interactionTimestamp);
           }}
-          onToggleVocalizations={() => setShowVocalizations((current) => !current)}
+          onSelectVocalizations={() => setOverlayMode("vocalizations")}
           onZoomChange={setZoom}
         />
 
