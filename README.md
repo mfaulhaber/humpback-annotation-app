@@ -3,7 +3,9 @@
 The active MVP in this repository is a static React timeline viewer for
 exported humpback acoustic jobs. The frontend loads same-origin timeline
 artifacts from `/data/*`, renders a landing page of available jobs, and opens a
-full-screen timeline workspace for each export.
+full-screen timeline workspace for each export. The active viewport is now
+canvas-backed so playback can scroll smoothly at fine zoom levels without
+changing the static export contract.
 
 The earlier folder/sample annotation stack remains in the repository, but it is
 now dormant in the active UI. Its API, DynamoDB, and dev-auth code are still
@@ -100,6 +102,15 @@ The active frontend expects:
 Everything is fetched same-origin. The viewer does not proxy tiles, audio, or
 manifests through application compute.
 
+### Viewer Rendering Notes
+
+- The timeline track is canvas-backed for smooth playback scrolling at `15m`,
+  `5m`, and `1m`
+- The playback hook exposes a live audio-derived clock so the viewport and UTC
+  time readout are not limited by coarse browser `timeupdate` events
+- Spectrogram tiles still load from the existing same-origin export paths and
+  are drawn from the client-side tile cache
+
 ### Environment Variables
 
 Copy `.env.local.example` to `.env.local` to customize. Defaults work
@@ -141,8 +152,8 @@ humpback-annotation-app/
 ## Running Tests
 
 - `pnpm test` runs the active frontend Vitest suite for timeline contract and
-  viewport utility coverage. It does not require DynamoDB Local or the dormant
-  API stack.
+  canvas viewport utility coverage. It does not require DynamoDB Local or the
+  dormant API stack.
 - `pnpm test:legacy` runs the older integration suite in `tests/`. Use it only
   when you are intentionally changing the dormant annotation/API path and have
   started the required local services.

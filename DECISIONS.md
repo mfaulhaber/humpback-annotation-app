@@ -172,6 +172,32 @@ but are removed from the active router and navigation.
 - The repository still contains annotation code, so future work on dormant code
   must continue preserving its label and aggregate semantics.
 
+## ADR-008: Use a Canvas-Backed Timeline Viewport With a Live Playback Clock
+
+**Date**: 2026-04-05
+**Status**: Accepted
+
+**Context**: The static timeline viewer initially rendered its spectrogram
+tiles and overlays as DOM-positioned elements while playback state flowed from
+the audio element's `timeupdate` event into React state. That was sufficient
+for basic correctness, but playback scrolling at `5m` and `1m` zoom looked
+jerky because browser `timeupdate` events are intentionally low frequency and
+the viewport motion became visibly quantized.
+
+**Decision**: Keep the viewer shell in React/DOM, but move the scroll-heavy
+timeline track to a canvas-backed viewport. Keep the same static export
+contract for manifests, tiles, and chunked audio. Extend the playback hook to
+expose a live audio-derived playback timestamp so the viewport and UTC clock
+can animate independently of coarse `timeupdate` events.
+
+**Consequences**:
+- Smooth playback motion no longer depends on React rerendering the entire page
+  from browser-throttled media events.
+- Same-origin tile and audio URL semantics remain unchanged.
+- Spectrogram drawing and overlay hit testing are now more imperative inside the
+  viewport implementation.
+- App chrome, controls, and high-level routing remain ordinary React UI.
+
 ---
 
 Use this template for future decisions:

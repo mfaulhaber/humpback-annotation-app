@@ -32,6 +32,7 @@ export function TimelineViewerPage() {
   const [centerTimestamp, setCenterTimestamp] = useState(0);
   const [showDetections, setShowDetections] = useState(true);
   const [showVocalizations, setShowVocalizations] = useState(true);
+  const [isViewportInteracting, setIsViewportInteracting] = useState(false);
 
   const playback = useTimelinePlayback(manifest);
 
@@ -56,6 +57,7 @@ export function TimelineViewerPage() {
 
         setZoom(initialZoom);
         setCenterTimestamp(initialCenter);
+        setIsViewportInteracting(false);
         viewerDebug("manifest-loaded", {
           jobId: response.job.id,
           initialCenterTimestamp: initialCenter,
@@ -81,6 +83,7 @@ export function TimelineViewerPage() {
       centerTimestamp,
       playback.currentTimestamp,
       playback.isPlaying,
+      isViewportInteracting,
     );
 
     viewerDebug("sync-snapshot", {
@@ -99,7 +102,14 @@ export function TimelineViewerPage() {
       });
       setCenterTimestamp(playback.currentTimestamp);
     }
-  }, [centerTimestamp, manifest, playback.currentTimestamp, playback.isPlaying, zoom]);
+  }, [
+    centerTimestamp,
+    isViewportInteracting,
+    manifest,
+    playback.currentTimestamp,
+    playback.isPlaying,
+    zoom,
+  ]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -118,13 +128,16 @@ export function TimelineViewerPage() {
 
       if (event.code === "Space") {
         event.preventDefault();
+        const interactionTimestamp = playback.isPlaying
+          ? playback.readLiveTimestamp()
+          : centerTimestamp;
         viewerDebug("toggle-play", {
           source: "keyboard",
-          centerTimestamp,
+          centerTimestamp: interactionTimestamp,
           isPlaying: playback.isPlaying,
           playbackTimestamp: playback.currentTimestamp,
         });
-        void playback.togglePlay(centerTimestamp);
+        void playback.togglePlay(interactionTimestamp);
         return;
       }
 
@@ -150,13 +163,19 @@ export function TimelineViewerPage() {
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        void handleSeek(centerTimestamp - getPanStepSeconds(zoom));
+        const baseTimestamp = playback.isPlaying
+          ? playback.readLiveTimestamp()
+          : centerTimestamp;
+        void handleSeek(baseTimestamp - getPanStepSeconds(zoom));
         return;
       }
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        void handleSeek(centerTimestamp + getPanStepSeconds(zoom));
+        const baseTimestamp = playback.isPlaying
+          ? playback.readLiveTimestamp()
+          : centerTimestamp;
+        void handleSeek(baseTimestamp + getPanStepSeconds(zoom));
       }
     }
 
@@ -244,7 +263,9 @@ export function TimelineViewerPage() {
 
         <TimelineViewport
           centerTimestamp={centerTimestamp}
+          isPlaying={playback.isPlaying}
           manifest={manifest}
+          onInteractionChange={setIsViewportInteracting}
           showDetections={showDetections}
           showVocalizations={showVocalizations}
           zoom={zoom}
@@ -252,6 +273,7 @@ export function TimelineViewerPage() {
             void handleSeek(timestamp);
           }}
           onCenterTimestampPreview={handlePreview}
+          readLiveTimestamp={playback.readLiveTimestamp}
         />
 
         <TimelineControls
@@ -260,25 +282,35 @@ export function TimelineViewerPage() {
           centerTimestamp={centerTimestamp}
           isPlaying={playback.isPlaying}
           playbackRate={playback.playbackRate}
+          readLiveTimestamp={playback.readLiveTimestamp}
           showDetections={showDetections}
           showVocalizations={showVocalizations}
           zoom={zoom}
           onCyclePlaybackRate={playback.cyclePlaybackRate}
           onSkipBackward={() => {
-            void handleSeek(centerTimestamp - getPanStepSeconds(zoom));
+            const baseTimestamp = playback.isPlaying
+              ? playback.readLiveTimestamp()
+              : centerTimestamp;
+            void handleSeek(baseTimestamp - getPanStepSeconds(zoom));
           }}
           onSkipForward={() => {
-            void handleSeek(centerTimestamp + getPanStepSeconds(zoom));
+            const baseTimestamp = playback.isPlaying
+              ? playback.readLiveTimestamp()
+              : centerTimestamp;
+            void handleSeek(baseTimestamp + getPanStepSeconds(zoom));
           }}
           onToggleDetections={() => setShowDetections((current) => !current)}
           onTogglePlay={() => {
+            const interactionTimestamp = playback.isPlaying
+              ? playback.readLiveTimestamp()
+              : centerTimestamp;
             viewerDebug("toggle-play", {
               source: "button",
-              centerTimestamp,
+              centerTimestamp: interactionTimestamp,
               isPlaying: playback.isPlaying,
               playbackTimestamp: playback.currentTimestamp,
             });
-            void playback.togglePlay(centerTimestamp);
+            void playback.togglePlay(interactionTimestamp);
           }}
           onToggleVocalizations={() => setShowVocalizations((current) => !current)}
           onZoomChange={setZoom}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   audioChunkPath,
   chunkForTimestamp,
@@ -6,6 +6,7 @@ import {
   type TimelineManifest,
 } from "../lib/timeline-contract.js";
 import { createDebugLogger } from "../lib/debug-log.js";
+import { resolveLivePlaybackTimestamp } from "../lib/timeline-playback-clock.js";
 import { clampTimestamp } from "../lib/timeline-math.js";
 
 type AudioSlot = "primary" | "secondary";
@@ -155,6 +156,7 @@ export function useTimelinePlayback(manifest: TimelineManifest | null) {
     secondary: null,
   });
   const lastRequestedTimestampRef = useRef<number | null>(null);
+  const currentTimestampRef = useRef(manifest?.job.start_timestamp ?? 0);
   const playbackRateRef = useRef(1);
   const seekSequenceRef = useRef(0);
   const pendingTimeUpdateDebugRef = useRef<{
@@ -180,6 +182,7 @@ export function useTimelinePlayback(manifest: TimelineManifest | null) {
     source: string,
     details: Record<string, unknown> = {},
   ): void {
+    currentTimestampRef.current = nextTimestamp;
     playbackDebug("current-timestamp-set", {
       currentTimestamp: nextTimestamp,
       source,
@@ -206,6 +209,26 @@ export function useTimelinePlayback(manifest: TimelineManifest | null) {
       ? primaryAudioRef.current
       : secondaryAudioRef.current;
   }
+
+  const readLiveTimestamp = useCallback((): number => {
+    if (!manifest || !isPlaying) {
+      return currentTimestampRef.current;
+    }
+
+    const activeSlot = activeSlotRef.current;
+    const activeAudio = getAudio(activeSlot);
+    const pendingSeek = pendingSeekRef.current;
+
+    return resolveLivePlaybackTimestamp({
+      audioCurrentTime: activeAudio ? activeAudio.currentTime : null,
+      chunkDurationSec: manifest.audio.chunk_duration_sec,
+      chunkIndex: loadedChunkRef.current[activeSlot],
+      fallbackTimestamp: currentTimestampRef.current,
+      jobEndTimestamp: manifest.job.end_timestamp,
+      jobStartTimestamp: manifest.job.start_timestamp,
+      pendingSeekTimestamp: pendingSeek ? pendingSeek.requestedTimestamp : null,
+    });
+  }, [isPlaying, manifest]);
 
   useEffect(() => {
     if (!manifest) {
@@ -479,11 +502,16 @@ export function useTimelinePlayback(manifest: TimelineManifest | null) {
     seekSequenceRef.current += 1;
     pendingSeekRef.current = null;
     pendingTimeUpdateDebugRef.current = null;
+    const pausedTimestamp = readLiveTimestamp();
     playbackDebug("pause", {
-      currentTimestamp,
+      currentTimestamp: pausedTimestamp,
     });
     primaryAudioRef.current?.pause();
     secondaryAudioRef.current?.pause();
+    lastRequestedTimestampRef.current = pausedTimestamp;
+    updateCurrentTimestamp(pausedTimestamp, "pause", {
+      pausedTimestamp,
+    });
     updateIsPlaying(false, "pause");
   }
 
@@ -517,7 +545,10 @@ export function useTimelinePlayback(manifest: TimelineManifest | null) {
       return;
     }
 
-    await seek(currentTimestamp + seconds, { autoplay: isPlaying });
+    const baseTimestamp = isPlaying
+      ? readLiveTimestamp()
+      : currentTimestampRef.current;
+    await seek(baseTimestamp + seconds, { autoplay: isPlaying });
   }
 
   function cyclePlaybackRate(): void {
@@ -715,6 +746,7 @@ export function useTimelinePlayback(manifest: TimelineManifest | null) {
     playbackRate,
     primaryAudioRef,
     secondaryAudioRef,
+    readLiveTimestamp,
     pause,
     seek,
     skipBy,

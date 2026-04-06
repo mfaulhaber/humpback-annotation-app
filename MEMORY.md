@@ -12,7 +12,8 @@ conventions, see `CLAUDE.md`.
 - Active user flows:
   - browse exported jobs from a timeline registry
   - inspect one job in a full-screen timeline viewer
-  - zoom, pan, and play chunked audio against static spectrogram tiles
+  - zoom, pan, and play chunked audio against static spectrogram tiles through
+    a canvas-backed viewport
 - Current repo state:
   - active React/Vite timeline viewer implemented in `frontend/`
   - dormant Fastify/DynamoDB annotation stack retained in `api/`, `scripts/`,
@@ -120,6 +121,8 @@ humpback-annotation-app/
 - one centered playhead drives viewport state
 - panning changes `centerTimestamp`
 - playback advances `centerTimestamp`
+- the rendered viewport samples a live audio-derived playback clock while
+  playing so fine zoom levels move smoothly
 - tiles are selected by zoom level plus visible time range
 - confidence, detections, and vocalizations align to the same time axis
 
