@@ -9,7 +9,8 @@ changing the static export contract.
 
 The earlier folder/sample annotation stack remains in the repository, but it is
 now dormant in the active UI. Its API, DynamoDB, and dev-auth code are still
-available for reference and future reuse.
+available for reference and future reuse, but the active AWS publish path in
+this repo intentionally excludes that legacy stack.
 
 ## Prerequisites
 
@@ -35,7 +36,7 @@ The export root should contain `index.json` and one folder per job:
 ```text
 <TIMELINE_EXPORT_ROOT>/
   index.json
-  <job_id>/
+  <job_id-uuid>/
     manifest.json
     tiles/
       24h/tile_0000.png
@@ -49,7 +50,7 @@ The export root should contain `index.json` and one folder per job:
 ```
 
 The Vite dev server mounts that directory at `/data`, so the browser uses the
-same URL shape locally and in the intended CloudFront/S3 deployment.
+same URL shape locally and in the deployed CloudFront/S3 viewer path.
 
 ## Active Routes
 
@@ -85,6 +86,11 @@ MEDIA_ROOT=/path/to/data/root pnpm dev --ingest /path/to/data/root/positives/hum
 | `pnpm db:ingest -- --path <dir>` | Ingest a single dataset directory |
 | `pnpm db:ingest -- --path <dir> --all` | Ingest all dataset subdirectories |
 | `pnpm db:ingest -- --path <dir> --dry-run` | Preview ingestion without writing |
+| `pnpm cdk:synth` | Synthesize the viewer-only CloudFront/S3 stack |
+| `pnpm cdk:diff` | Diff the viewer-only CloudFront/S3 stack |
+| `pnpm cdk:deploy` | Deploy the viewer-only CloudFront/S3 stack |
+| `pnpm publish:viewer:app` | Upload the built frontend bundle to the deployed app bucket |
+| `pnpm publish:viewer:data -- --path <export-root>` | Upload one export root to the deployed data bucket |
 | `pnpm --filter @humpback/api dev` | Start API server only |
 | `pnpm --filter @humpback/frontend dev` | Start the timeline viewer frontend only |
 
@@ -98,9 +104,84 @@ The active frontend expects:
 - `data/{jobId}/manifest.json` for viewer metadata
 - `data/{jobId}/tiles/{zoom}/tile_0000.png` for spectrogram tiles
 - `data/{jobId}/audio/chunk_0000.mp3` for audio chunks
+- `job_id` / `job.id` values in the export contract to be UUID strings
 
 Everything is fetched same-origin. The viewer does not proxy tiles, audio, or
 manifests through application compute.
+
+## AWS Deployment
+
+The active deployment path is viewer-only:
+
+- primary stack region: `us-west-2`
+- public entry point: one CloudFront distribution
+- app hosting: private S3 app bucket
+- timeline data hosting: private S3 data bucket
+- legacy annotation API, DynamoDB, auth, and `/api/*` routes are not part of
+  this publish path
+
+CloudFront serves the SPA shell from the app bucket and exposes the export data
+at `/data/*` from the separate data bucket. The export root itself stays
+rooted at `index.json` plus job folders in S3; CloudFront rewrites the `/data`
+prefix before origin fetches, so you do not need to upload a nested `data/`
+directory into the bucket.
+
+### Deploy The Stack
+
+Copy `.env.deploy.example` to `.env.deploy` or export the same variables in
+your shell.
+
+Minimum inputs:
+
+- `AWS_REGION=us-west-2`
+- optional bucket-name overrides through
+  `STATIC_VIEWER_APP_BUCKET_NAME` and `STATIC_VIEWER_DATA_BUCKET_NAME`
+
+Custom domain inputs, if wanted:
+
+- `STATIC_VIEWER_DOMAIN_NAME`
+- `STATIC_VIEWER_CERTIFICATE_ARN`
+- optional `STATIC_VIEWER_HOSTED_ZONE_ID` and `STATIC_VIEWER_HOSTED_ZONE_NAME`
+
+Note: CloudFront certificates still have to live in `us-east-1`, even though
+the main stack targets `us-west-2`.
+
+Deploy flow:
+
+```bash
+pnpm cdk:synth
+pnpm cdk:deploy
+```
+
+After deploy, capture the stack outputs for:
+
+- app bucket name
+- data bucket name
+- CloudFront distribution ID
+- CloudFront domain name
+
+### Publish The Viewer Bundle
+
+```bash
+STATIC_VIEWER_APP_BUCKET_NAME=... \
+STATIC_VIEWER_DISTRIBUTION_ID=... \
+pnpm publish:viewer:app
+```
+
+By default the command builds `frontend/dist`, uploads it to the app bucket,
+and invalidates `/` plus `/index.html`.
+
+### Publish Timeline Export Data
+
+```bash
+STATIC_VIEWER_DATA_BUCKET_NAME=... \
+STATIC_VIEWER_DISTRIBUTION_ID=... \
+pnpm publish:viewer:data -- --path /path/to/export/root
+```
+
+The export root must contain `index.json` and job folders. The publish command
+uploads that root directly to the data bucket and invalidates `/data/index.json`
+plus any changed manifest paths.
 
 ### Viewer Rendering Notes
 
@@ -142,9 +223,9 @@ humpback-annotation-app/
   api/                  # Dormant Fastify API server + Lambda adapter
     src/
       routes/           # Legacy annotation/catalog/admin routes
-  scripts/              # Dev tooling scripts
+  scripts/              # Dev tooling scripts plus viewer publish helpers
   tests/                # Integration tests (Vitest)
-  cdk/                  # Infrastructure (not yet implemented)
+  cdk/                  # Viewer-only CloudFront/S3 deployment stack
   local_media/          # Placeholder audio + spectrogram files
   docker-compose.yml    # DynamoDB Local
 ```

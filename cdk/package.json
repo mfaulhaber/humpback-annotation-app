@@ -4,10 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node -e \"console.log('CDK app scaffolding is not implemented yet.')\"",
+    "dev": "tsx src/synth.ts",
     "typecheck": "tsc --project tsconfig.json --pretty false",
     "build": "pnpm run typecheck",
     "test": "node -e \"console.log('No infrastructure tests are configured yet.')\"",
-    "synth": "tsx src/synth.ts"
+    "synth": "tsx src/synth.ts",
+    "diff": "cdk diff --app 'tsx src/synth.ts'",
+    "deploy": "cdk deploy --app 'tsx src/synth.ts' --require-approval never"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.248.0",
+    "constructs": "10.6.0"
+  },
+  "devDependencies": {
+    "aws-cdk": "2.1117.0"
   }
 }

@@ -7,7 +7,8 @@ stack that remains in this repository.
 
 ## Phase
 
-Timeline viewer MVP pivot implemented on the active frontend surface.
+Timeline viewer MVP pivot implemented on the active frontend surface, with a
+viewer-only AWS publish path now scaffolded in-repo.
 
 ## Quick Start
 
@@ -49,6 +50,18 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
   same paths in development and CloudFront/S3 hosting
 - `pnpm test` now runs frontend Vitest coverage for the active timeline viewer
 
+### Viewer-Only AWS Publish Path
+
+- `cdk/` now contains a deployable CloudFront + S3 stack for the active viewer
+- The primary stack region is `us-west-2`
+- One private S3 bucket stores the frontend bundle, and one private S3 bucket
+  stores the timeline export root
+- CloudFront serves the SPA shell from the app bucket and exposes the data
+  bucket at `/data/*`
+- CloudFront rewrites `/data/*` origin requests so the data bucket stores the
+  export root directly as `index.json` plus job folders
+- Repo-local publish helpers exist for the app bundle and timeline export data
+
 ### Retained Legacy Annotation Stack
 
 - Fastify API with local dev server and Lambda adapter stub
@@ -70,8 +83,10 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
 - Detection or vocalization label editing in the timeline viewer
 - Frontend component or end-to-end coverage for timeline viewer interactions
 - Timeline export generation inside this repository
-- CloudFront/S3/CDK deployment implementation for the new viewer
-- Authentication integration (Cognito — separate plan)
+- Automatic CI/CD for the viewer deployment path
+- ACM certificate provisioning inside this repo for CloudFront custom domains
+- Authentication integration (Cognito — separate plan, and not part of the
+  viewer-only AWS publish path)
 - CI configuration
 
 ## Known Constraints and Guardrails
@@ -79,6 +94,7 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
 - Optimize for low idle cost first
 - Timeline manifests, tiles, and audio remain static same-origin assets
 - Application compute must not proxy viewer media bytes
+- Viewer-only AWS deployment excludes the dormant legacy annotation stack
 - Legacy annotation code remains in-repo but inactive in the active UI
 - Legacy annotation semantics still matter when working on dormant code:
   one current label per sample per user and aggregate reveal only after the

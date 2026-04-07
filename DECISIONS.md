@@ -198,6 +198,41 @@ can animate independently of coarse `timeupdate` events.
   viewport implementation.
 - App chrome, controls, and high-level routing remain ordinary React UI.
 
+## ADR-009: Deploy the Active Timeline Viewer as a Viewer-Only CloudFront + S3 Stack in us-west-2
+
+**Date**: 2026-04-06
+**Status**: Accepted
+
+**Context**: The active product surface is now a readonly timeline viewer that
+loads its registry, manifests, tiles, and chunked audio directly from
+same-origin static paths. The repository previously documented an intended
+CloudFront/S3 deployment shape, but the `cdk/` package was still a stub and
+there was no repo-local publish path for the viewer bundle or timeline export
+data. The user also chose to archive the dormant legacy annotation app from the
+active deployment plan.
+
+**Decision**: Implement a viewer-only AWS deployment path centered on one
+CloudFront distribution in `us-west-2` with two private S3 origins: one for the
+frontend bundle and one for timeline export data. CloudFront serves the SPA
+shell from the app bucket and exposes the data bucket at `/data/*`. A
+CloudFront Function rewrites app-shell routes to `/index.html`, and a separate
+CloudFront Function strips the `/data` prefix before origin fetches so the data
+bucket stores the export root directly as `index.json` plus job folders. The
+repo also ships publish helpers for the app bundle and export data. Custom
+domains are supported through an existing ACM certificate ARN, which must still
+point to a certificate in `us-east-1`.
+
+**Consequences**:
+- The active viewer now has a concrete low-idle-cost AWS deployment path in the
+  repository rather than only a planned hosting story.
+- Timeline export data remains URL-addressable and same-origin without API or
+  Lambda mediation.
+- The data bucket stores raw export roots instead of requiring a nested
+  `data/` directory, while the browser contract remains `/data/*`.
+- The dormant legacy annotation API, DynamoDB tables, and auth flow remain
+  intentionally out of scope for the active deployment path.
+- CI/CD and in-repo ACM certificate provisioning are still follow-up work.
+
 ---
 
 Use this template for future decisions:

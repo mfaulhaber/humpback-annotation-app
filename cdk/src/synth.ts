@@ -1,2 +1,7 @@
-console.log("CDK synth is not configured yet.");
-console.log("Next step: add the CDK app and stacks, then wire `cdk synth`.");
+import { buildStaticViewerApp } from "./app.js";
+
+const assembly = buildStaticViewerApp().synth();
+
+console.log(
+  `Synthesized ${assembly.stacks.length} stack(s) to ${assembly.directory}.`,
+);

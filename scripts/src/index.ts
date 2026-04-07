@@ -1,2 +1,2 @@
 export const scriptsBootstrapStatus =
-  "Local helper scripts are scaffolded but not implemented yet.";
+  "Local helper scripts cover DynamoDB bootstrap plus static viewer publish flows.";

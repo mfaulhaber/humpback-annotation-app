@@ -34,14 +34,15 @@ Components:
 4. Dormant DynamoDB-backed catalog and labels access layers under
    `api/src/data/`
 5. Local tooling in `scripts/` for dev orchestration, table init, seed data,
-   and real-data ingestion for the legacy stack
+   real-data ingestion for the legacy stack, and viewer publish helpers
 6. Vitest frontend coverage in `frontend/` for the active timeline viewer plus
    legacy integration coverage in `tests/` for the dormant API path
-7. Future infrastructure code in `cdk/`
+7. Viewer-only CloudFront/S3 infrastructure code in `cdk/`
 8. Local or external media served from `local_media/` or `MEDIA_ROOT`
 
 Current non-implemented areas include timeline label editing, production auth
-integration, deployed CDK stacks, CI/CD, and the cloud delivery pipeline.
+integration for the legacy stack, CI/CD, and automated certificate provisioning
+for custom domains.
 
 ---
 
@@ -64,7 +65,11 @@ integration, deployed CDK stacks, CI/CD, and the cloud delivery pipeline.
   - Initialize DynamoDB Local tables: `pnpm db:local:init`
   - Seed DynamoDB Local: `pnpm db:local:seed`
   - Ingest real data: `pnpm db:ingest -- --path <dir>`
-  - Synthesize infrastructure stubs: `pnpm cdk:synth`
+  - Synthesize the viewer stack: `pnpm cdk:synth`
+  - Diff the viewer stack: `pnpm cdk:diff`
+  - Deploy the viewer stack: `pnpm cdk:deploy`
+  - Publish the viewer app bundle: `pnpm publish:viewer:app`
+  - Publish timeline export data: `pnpm publish:viewer:data -- --path <dir>`
 
 ### 3.2 Annotation and Data Rules
 - Preserve a unique current label for each `(sample_id, user_id)` pair when
@@ -225,7 +230,7 @@ Current non-goals for this repo:
 | Frontend | React 19 + Vite 8 |
 | Data Store | DynamoDB Local in dev, DynamoDB-style schema in production plans |
 | Testing | Vitest frontend tests, legacy Vitest integration tests, plus targeted manual smoke when needed |
-| Infra Direction | CDK stubs today, fuller stacks planned |
+| Infra Direction | CDK viewer stack implemented today, CI/CD and broader cloud rollout still planned |
 
 ### 8.3 Repository Layout
 

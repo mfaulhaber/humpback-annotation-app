@@ -1,7 +1,9 @@
 import type { TimelineEntry, TimelineManifest } from "./timeline-contract.js";
 
+const sampleJobId = "550e8400-e29b-41d4-a716-446655440000";
+
 export const sampleTimelineEntry: TimelineEntry = {
-  job_id: "demo-job",
+  job_id: sampleJobId,
   hydrophone_name: "Orcasound Lab",
   species: "ar-v2-promoted",
   start_timestamp: 1_711_929_600,
@@ -11,7 +13,7 @@ export const sampleTimelineEntry: TimelineEntry = {
 export const sampleTimelineManifest: TimelineManifest = {
   version: 1,
   job: {
-    id: "demo-job",
+    id: sampleJobId,
     hydrophone_name: "Orcasound Lab",
     hydrophone_id: "orcasound-lab",
     start_timestamp: 1_711_929_600,

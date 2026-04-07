@@ -18,16 +18,16 @@ keeping the legacy annotation app out of deployment scope.
 - Create: `cdk/src/stacks/static-viewer-stack.ts`
 
 **Acceptance criteria:**
-- [ ] `pnpm cdk:synth` produces a real CloudFormation template instead of a
+- [x] `pnpm cdk:synth` produces a real CloudFormation template instead of a
       placeholder message
-- [ ] The stack provisions one CloudFront distribution with separate private S3
+- [x] The stack provisions one CloudFront distribution with separate private S3
       origins for the app bundle and `/data/*` timeline artifacts
-- [ ] SPA fallback behavior supports `/` and `/:jobId` without rewriting
+- [x] SPA fallback behavior supports `/` and `/:jobId` without rewriting
       missing `/data/*` objects to `index.html`
-- [ ] The stack can support an initial CloudFront domain and an optional custom
+- [x] The stack can support an initial CloudFront domain and an optional custom
       domain/TLS configuration without introducing API, Lambda, or DynamoDB
       resources
-- [ ] The primary stack targets `us-west-2`, with the CloudFront ACM
+- [x] The primary stack targets `us-west-2`, with the CloudFront ACM
       certificate handled as a documented `us-east-1` exception when needed
 
 **Verification:**
@@ -43,19 +43,20 @@ keeping the legacy annotation app out of deployment scope.
 - Modify: `package.json`
 - Modify: `scripts/package.json`
 - Modify: `scripts/src/index.ts`
+- Create: `scripts/src/publish-support.ts`
 - Create: `scripts/src/publish-static-viewer.ts`
 - Create: `scripts/src/publish-timeline-data.ts`
 - Create: `.env.deploy.example`
 
 **Acceptance criteria:**
-- [ ] The repository provides one command to upload the built frontend bundle to
+- [x] The repository provides one command to upload the built frontend bundle to
       the app bucket with correct cache-header treatment for `index.html` and
       hashed assets
-- [ ] The repository provides a separate command to publish a local export root
+- [x] The repository provides a separate command to publish a local export root
       to the timeline-data bucket for `/data/*`
-- [ ] Publish commands fail clearly when required AWS or path inputs are
+- [x] Publish commands fail clearly when required AWS or path inputs are
       missing
-- [ ] The data publish path excludes legacy annotation artifacts and local-only
+- [x] The data publish path excludes legacy annotation artifacts and local-only
       media folders
 
 **Verification:**
@@ -68,19 +69,20 @@ keeping the legacy annotation app out of deployment scope.
 ### Task 3: Document the viewer-only AWS deployment path and archive the legacy app from release scope
 
 **Files:**
+- Modify: `CLAUDE.md`
 - Modify: `README.md`
 - Modify: `STATUS.md`
 - Modify: `MEMORY.md`
 - Modify: `DECISIONS.md`
 
 **Acceptance criteria:**
-- [ ] README explains how to deploy the active timeline viewer to AWS and which
+- [x] README explains how to deploy the active timeline viewer to AWS and which
       inputs are required
-- [ ] STATUS and MEMORY describe the static viewer deployment shape without
+- [x] STATUS and MEMORY describe the static viewer deployment shape without
       implying the legacy annotation stack is part of the AWS release
-- [ ] `DECISIONS.md` records the chosen static-hosting architecture if the CDK
+- [x] `DECISIONS.md` records the chosen static-hosting architecture if the CDK
       implementation finalizes it
-- [ ] The docs explicitly state that the legacy annotation app is archived from
+- [x] The docs explicitly state that the legacy annotation app is archived from
       this deployment plan and remains out of scope
 
 **Verification:**

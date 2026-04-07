@@ -16,9 +16,10 @@ conventions, see `CLAUDE.md`.
     a canvas-backed viewport
 - Current repo state:
   - active React/Vite timeline viewer implemented in `frontend/`
+  - viewer-only CloudFront/S3 deployment stack implemented in `cdk/`
   - dormant Fastify/DynamoDB annotation stack retained in `api/`, `scripts/`,
     and `tests/`
-  - production auth, deployment, and CI/CD remain planned
+  - production auth for the legacy stack and CI/CD remain planned
 - Session workflow guidance now lives in `docs/workflows/` with matching
   `.claude/commands/` entrypoints and repo-local plan files in `docs/plans/`
 
@@ -65,7 +66,7 @@ humpback-annotation-app/
 | Legacy Backend | Dormant Fastify API for folder/sample annotation flows |
 | Legacy Data Store | DynamoDB-style catalog and labels tables |
 | Auth | Managed user authentication with local dev auth override |
-| IaC | Cloud deployment via infrastructure-as-code |
+| IaC | Viewer-only CloudFront/S3 deployment via CDK in `us-west-2` |
 
 ## Active Product Rules
 
@@ -75,6 +76,7 @@ humpback-annotation-app/
 - Tiles, audio chunks, and manifests stay URL-addressable and same-origin
 - Viewer time displays are UTC
 - The app must not proxy tiles or audio through compute
+- The active AWS publish path excludes the dormant legacy annotation stack
 - Legacy annotation semantics remain intact in dormant code when touched
 
 ## Timeline Viewer Routes
@@ -89,7 +91,7 @@ humpback-annotation-app/
 - `data/index.json`
 - shape:
   - `timelines[]`
-  - `job_id`
+  - `job_id` as a UUID string
   - `hydrophone_name`
   - `species`
   - `start_timestamp`
@@ -100,6 +102,7 @@ humpback-annotation-app/
 - `data/{jobId}/manifest.json`
 - major sections:
   - `job`
+    - `job.id` as a UUID string
   - `tiles`
   - `audio`
   - `confidence`
@@ -125,6 +128,26 @@ humpback-annotation-app/
   playing so fine zoom levels move smoothly
 - tiles are selected by zoom level plus visible time range
 - confidence, detections, and vocalizations align to the same time axis
+
+## AWS Static Viewer Deployment
+
+- primary deployment region: `us-west-2`
+- viewer hosting shape:
+  - CloudFront distribution
+  - private S3 app bucket for the Vite bundle
+  - private S3 data bucket for the export root
+- CloudFront serves the SPA shell from the app bucket
+- CloudFront exposes export artifacts at `/data/*`
+- the data bucket stores the export root directly:
+  - `index.json`
+  - `{jobId}/manifest.json`
+  - `{jobId}/tiles/*`
+  - `{jobId}/audio/*`
+- CloudFront strips the `/data` prefix before origin fetches so the bucket does
+  not need a nested `data/` folder
+- custom-domain certificates for CloudFront must still live in `us-east-1`
+- the active AWS path does not deploy the dormant annotation API, DynamoDB
+  tables, or auth flow
 
 ## Legacy Annotation Entities
 
@@ -288,6 +311,13 @@ Active local viewer path:
 - Vite mounts that directory at `/data/*`
 - No API or DynamoDB is required to view timelines locally
 
+Active AWS viewer path:
+
+- `pnpm cdk:synth`
+- `pnpm cdk:deploy`
+- `pnpm publish:viewer:app`
+- `pnpm publish:viewer:data -- --path <export-root>`
+
 Dormant annotation stack path:
 
 - React + Vite frontend dev server
@@ -310,6 +340,18 @@ Representative local environment variables:
 - `FRONTEND_PORT=6173`
 - `AUTH_MODE=dev`
 - `AWS_REGION=us-west-2`
+
+Representative deploy environment variables:
+
+- `AWS_REGION=us-west-2`
+- `STATIC_VIEWER_STACK_NAME=humpback-static-viewer`
+- `STATIC_VIEWER_PRICE_CLASS=PriceClass_100`
+- `STATIC_VIEWER_APP_BUCKET_NAME=...`
+- `STATIC_VIEWER_DATA_BUCKET_NAME=...`
+- `STATIC_VIEWER_DISTRIBUTION_ID=...`
+- `STATIC_VIEWER_DOMAIN_NAME=...` optional
+- `STATIC_VIEWER_CERTIFICATE_ARN=...` optional and must refer to `us-east-1`
+- `TIMELINE_EXPORT_ROOT=/path/to/export/root`
 
 Representative local auth headers:
 
@@ -344,6 +386,9 @@ Bootstrap commands available today:
 - `pnpm db:local:seed`
 - `pnpm db:ingest -- --path <dir>`
 - `pnpm cdk:synth`
+- `pnpm cdk:deploy`
+- `pnpm publish:viewer:app`
+- `pnpm publish:viewer:data -- --path <export-root>`
 
 Current command behavior:
 
@@ -356,4 +401,8 @@ Current command behavior:
 - `pnpm db:local:init` and `pnpm db:local:seed` create and populate local
   DynamoDB tables
 - `pnpm db:ingest` imports real dataset folders into the Catalog table
-- `pnpm cdk:synth` synthesizes the current CDK stubs
+- `pnpm cdk:synth` synthesizes the viewer-only CloudFront/S3 stack
+- `pnpm cdk:deploy` deploys the viewer-only CloudFront/S3 stack in `us-west-2`
+- `pnpm publish:viewer:app` uploads the built Vite bundle to the app bucket
+- `pnpm publish:viewer:data` uploads one timeline export root to the data
+  bucket and invalidates `/data/index.json` plus changed manifest paths
