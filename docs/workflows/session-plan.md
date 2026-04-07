@@ -31,8 +31,8 @@ non-trivial work, and keep repo-local planning artifacts current.
      - acceptance criteria
      - verification requirements, including `pnpm test`, `pnpm test:legacy`,
        or manual smoke when relevant
-   - Note required doc or memory-file updates when the change affects
-     architecture, workflows, data models, or implemented status
+   - Note required doc updates when the change affects architecture, workflows,
+     data models, or implemented behavior
 
 5. **Write the plan artifacts**
    - Save the implementation plan to `docs/plans/YYYY-MM-DD-<feature>.md`

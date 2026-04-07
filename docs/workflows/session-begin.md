@@ -19,11 +19,10 @@ or debugging.
 
 3. **Read context files**
    - `CLAUDE.md` for project rules, commands, and verification expectations
-   - `STATUS.md` for what is actually implemented right now
    - `DECISIONS.md` for accepted architecture decisions
    - `README.md` for current local setup and runtime behavior
-   - `MEMORY.md` when the task touches API shape, DynamoDB, media delivery, or
-     local development behavior
+   - Relevant repo-local plans, specs, or workflow docs when the task touches
+     API shape, DynamoDB, media delivery, or local development behavior
 
 4. **Check for active work**
    - Look for local `feature/*` branches

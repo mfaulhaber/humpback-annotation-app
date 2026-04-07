@@ -25,10 +25,11 @@ are no unresolved automated verification failures or review findings.
    - Are docs still truthful about what is implemented versus still planned?
 
 3. **Completeness checks**
-   - Are `CLAUDE.md`, `AGENTS.md`, `STATUS.md`, `MEMORY.md`, or workflow docs
-     updated where needed?
+   - Are `CLAUDE.md`, `AGENTS.md`, `README.md`, relevant plan/spec docs, or
+     workflow docs updated where needed?
    - If DynamoDB schema or access patterns changed, were
-     `scripts/src/db-local-init.ts`, `MEMORY.md`, and `DECISIONS.md` updated?
+     `scripts/src/db-local-init.ts`, the affected repo docs, and
+     `DECISIONS.md` updated?
    - Is automated coverage added or explicitly deferred with a reason when new
      logic is substantial?
    - If `pnpm test` or `pnpm test:legacy` could not be run when relevant, is

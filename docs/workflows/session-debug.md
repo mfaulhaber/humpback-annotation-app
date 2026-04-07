@@ -27,8 +27,8 @@ times as needed between implementation and final review.
 4. **Identify the root cause**
    - Explain why the bug occurs
    - Confirm the explanation against the code, not just intuition
-   - Re-check `DECISIONS.md` or `MEMORY.md` when the issue touches core data or
-     workflow assumptions
+   - Re-check `DECISIONS.md` and the relevant repo docs when the issue touches
+     core data or workflow assumptions
 
 5. **Implement the minimal fix**
    - Change only what is necessary to address the root cause

@@ -71,14 +71,13 @@ keeping the legacy annotation app out of deployment scope.
 **Files:**
 - Modify: `CLAUDE.md`
 - Modify: `README.md`
-- Modify: `STATUS.md`
-- Modify: `MEMORY.md`
+- Modify: supporting repo docs as needed
 - Modify: `DECISIONS.md`
 
 **Acceptance criteria:**
 - [x] README explains how to deploy the active timeline viewer to AWS and which
       inputs are required
-- [x] STATUS and MEMORY describe the static viewer deployment shape without
+- [x] Supporting repo docs describe the static viewer deployment shape without
       implying the legacy annotation stack is part of the AWS release
 - [x] `DECISIONS.md` records the chosen static-hosting architecture if the CDK
       implementation finalizes it

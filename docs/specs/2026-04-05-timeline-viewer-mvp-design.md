@@ -489,8 +489,7 @@ Expected frontend work areas:
 Expected documentation work:
 
 - `README.md`
-- `STATUS.md`
-- `MEMORY.md`
+- relevant repo docs under `docs/` and project rule files
 - possibly `DECISIONS.md` if this pivot is accepted as a material architectural
   change
 

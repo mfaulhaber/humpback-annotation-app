@@ -91,16 +91,15 @@ CloudFront-backed S3 in production.
 
 **Files:**
 - Modify: `README.md`
-- Modify: `STATUS.md`
-- Modify: `MEMORY.md`
+- Modify: supporting repo docs as needed
 - Modify: `DECISIONS.md`
 
 **Acceptance criteria:**
 - [ ] Repo docs describe the timeline viewer as the active MVP surface
 - [ ] Local setup docs explain `TIMELINE_EXPORT_ROOT` and same-origin `/data`
       serving
-- [ ] Status and memory docs explain that annotation code remains in-repo but
-      is hidden from the active app
+- [ ] Supporting repo docs explain that annotation code remains in-repo but is
+      hidden from the active app
 - [ ] `DECISIONS.md` records the static same-origin timeline-viewer pivot if
       the implementation finalizes that architectural direction
 

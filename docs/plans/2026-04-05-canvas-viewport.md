@@ -81,14 +81,13 @@ playback, especially at `5m` and `1m` zoom.
 
 **Files:**
 - Modify: `README.md`
-- Modify: `STATUS.md`
-- Modify: `MEMORY.md`
+- Modify: supporting repo docs as needed
 - Modify: `DECISIONS.md`
 
 **Acceptance criteria:**
 - [ ] Repo docs describe the active viewer viewport as canvas-backed if the
       implementation finalizes that architecture
-- [ ] Status and memory docs call out the live playback clock behavior and any
+- [ ] Supporting repo docs call out the live playback clock behavior and any
       remaining limitations
 - [ ] `DECISIONS.md` records the renderer architecture shift if it becomes an
       accepted direction

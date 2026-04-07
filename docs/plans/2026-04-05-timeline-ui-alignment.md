@@ -80,17 +80,17 @@ area feel more integrated, compact, and visually intentional.
 
 ---
 
-### Task 4: Refresh tests and status docs for the refined viewer behavior
+### Task 4: Refresh tests and supporting docs for the refined viewer behavior
 
 **Files:**
-- Modify: `STATUS.md`
+- Modify: supporting repo docs as needed
 - Modify: `frontend/src/lib/timeline-canvas-renderer.test.ts`
 - Modify: `frontend/src/lib/timeline-math.test.ts`
 
 **Acceptance criteria:**
 - [ ] Automated coverage reflects any new overlay geometry or renderer
       expectations introduced by the alignment pass
-- [ ] `STATUS.md` still describes the active viewer truthfully if the overlay
+- [ ] Repo docs still describe the active viewer truthfully if the overlay
       behavior becomes more specific or visibly different
 
 **Verification:**

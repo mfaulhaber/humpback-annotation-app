@@ -26,15 +26,16 @@ reviewable implementation diff.
      an explicit decision
    - Preserve spectrogram nullability and real-data ingestion semantics unless
      the change intentionally updates them
-   - Read `DECISIONS.md` and `MEMORY.md` before changing DynamoDB attributes,
-     indexes, query patterns, or local stack behavior
+   - Read `DECISIONS.md` and the relevant existing docs or implementation
+     before changing DynamoDB attributes, indexes, query patterns, or local
+     stack behavior
 
 4. **Implement tasks sequentially**
    - Keep changes focused
    - Prefer extending existing modules over introducing new abstractions without
      a clear need
    - If DynamoDB attributes, indexes, or item shapes change, update
-     `scripts/src/db-local-init.ts` and `MEMORY.md`
+     `scripts/src/db-local-init.ts` and the affected repo docs
    - If workflow conventions change, update `CLAUDE.md`, `AGENTS.md`,
      `docs/workflows/`, and `.claude/commands/` together
 
@@ -56,11 +57,14 @@ reviewable implementation diff.
 
 7. **Fix verification failures**
 
-8. **Update docs and memory files**
-   - `STATUS.md` for implemented behavior or constraint changes
-   - `MEMORY.md` for data model, query pattern, or local-stack reference changes
+8. **Update docs and planning records**
+   - `README.md` for user-facing behavior, setup, or runtime changes
+   - `CLAUDE.md`, `AGENTS.md`, `docs/workflows/`, and `.claude/commands/` for
+     workflow or repo-rule changes
    - The relevant repo-local plan in `docs/plans/` when plan status or scope
      changes
+   - The relevant design spec in `docs/specs/` when the documented design needs
+     to stay aligned
    - `DECISIONS.md` for significant new architecture decisions
 
 9. **Prepare a focused implementation diff**

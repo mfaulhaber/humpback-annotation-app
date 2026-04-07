@@ -59,12 +59,11 @@ folders while preserving seed-data support for local development and tests.
 
 **Files:**
 - Modify: `README.md`
-- Modify: `STATUS.md`
-- Modify: `MEMORY.md`
+- Modify: supporting repo docs as needed
 
 **Acceptance criteria:**
 - [ ] Local setup docs explain `MEDIA_ROOT` and the real-data folder structure
-- [ ] Repo status docs reflect the implemented ingestion support
+- [ ] Repo docs reflect the implemented ingestion support
 - [ ] Active planning docs point to a repo-local detailed plan
 
 **Verification:**

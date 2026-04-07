@@ -8,10 +8,10 @@ Follow these phases in order for non-trivial tasks. Each phase references a
 workflow file in `docs/workflows/` with the detailed steps.
 
 ### Phase 1: Context (`docs/workflows/session-begin.md`)
-- Read `CLAUDE.md`, `STATUS.md`, and `DECISIONS.md`
+- Read `CLAUDE.md` and `DECISIONS.md`
 - Read `README.md` for current setup and runtime behavior
-- Read `MEMORY.md` when the task touches API shape, DynamoDB, media delivery,
-  or local development behavior
+- Read relevant repo-local plans, specs, or workflow docs when the task
+  touches API shape, DynamoDB, media delivery, or local development behavior
 - Check repo state, current branch, and any in-progress feature work
 
 ### Phase 2: Design
@@ -38,7 +38,7 @@ workflow file in `docs/workflows/` with the detailed steps.
 - Run the repo verification gates before finalizing implementation
 - Keep the implementation scope batched so `session-review` and `session-end`
   can validate and commit one focused change set
-- Update `STATUS.md`, `MEMORY.md`, and `DECISIONS.md` when the change affects
+- Update the relevant repo docs and `DECISIONS.md` when the change affects
   implemented behavior, workflows, data models, or architecture
 
 ### Phase 5: Debug (`docs/workflows/session-debug.md`)

@@ -95,24 +95,23 @@ for custom domains.
   the relevant docs in the same change.
 
 ### 3.4 API, DynamoDB, and Local Dev Practices
-- Read `DECISIONS.md` and `MEMORY.md` before changing DynamoDB attributes,
-  indexes, query patterns, or local stack behavior.
+- Read `DECISIONS.md` and the relevant existing docs or implementation before
+  changing DynamoDB attributes, indexes, query patterns, or local stack
+  behavior.
 - Keep local timeline viewing possible without API or DynamoDB when exported
   artifacts are available.
 - If DynamoDB table attributes or indexes change, update
-  `scripts/src/db-local-init.ts`, `MEMORY.md`, and `STATUS.md`; add an ADR in
+  `scripts/src/db-local-init.ts` and any affected repo docs; add an ADR in
   `DECISIONS.md` when the change is architecturally significant.
 - Preserve dev-auth behavior locally unless the task explicitly changes it.
 - Keep local development possible without deploying to AWS.
 
 ### 3.5 Documentation and Planning
 - Update the relevant docs when behavior, workflow, architecture, data model,
-  or project status changes:
+  or implementation details change:
   - `CLAUDE.md` for project rules and verification expectations
   - `AGENTS.md` for Codex workflow guidance
   - `README.md` for user-facing setup and runtime behavior
-  - `STATUS.md` for implemented behavior and constraints
-  - `MEMORY.md` for stable reference material
   - `DECISIONS.md` for append-only architecture decisions
   - `docs/workflows/` for session workflow steps
   - `docs/plans/` for repo-local implementation plans and planning history
@@ -205,20 +204,23 @@ Current non-goals for this repo:
 - Proxying media bytes through the API by default
 - Replacing DynamoDB with a relational database in V1
 - Pretending CDK deployment, Cognito auth, or CI/CD are already implemented
-- Hiding workflow or architecture changes without updating the memory files
+- Hiding workflow or architecture changes without updating the relevant repo
+  docs
 
 ---
 
 ## 8. Project Reference
 
-### 8.1 Memory Files
+### 8.1 Core Reference Files
 
 | File | Purpose |
 |------|---------|
 | `AGENTS.md` | Codex workflow entry point |
-| `STATUS.md` | Implemented behavior, capabilities, and current constraints |
+| `README.md` | Current setup and runtime behavior |
 | `DECISIONS.md` | Append-only architecture decision log |
-| `MEMORY.md` | Stable reference material for entities, DynamoDB, and local dev |
+| `docs/workflows/` | Session workflow definitions |
+| `docs/plans/` | Repo-local implementation plans and planning history |
+| `docs/specs/` | Design specs for significant work |
 
 ### 8.2 Technology Stack
 
@@ -239,9 +241,7 @@ humpback-annotation-app/
 ├── CLAUDE.md
 ├── AGENTS.md
 ├── README.md
-├── STATUS.md
 ├── DECISIONS.md
-├── MEMORY.md
 ├── package.json
 ├── pnpm-lock.yaml
 ├── .claude/
