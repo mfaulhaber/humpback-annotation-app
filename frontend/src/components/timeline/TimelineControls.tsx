@@ -1,3 +1,4 @@
+import { AudioLines, Pause, Play, SkipBack, SkipForward, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ZOOM_LEVELS, type ZoomLevel } from "../../lib/timeline-contract.js";
 import { formatUtcTimestamp } from "../../lib/timeline-math.js";
@@ -64,8 +65,8 @@ export function TimelineControls({
           <button
             key={entry}
             type="button"
-            className={`timeline-chip ${
-              zoom === entry ? "timeline-chip--active" : ""
+            className={`timeline-zoom-chip ${
+              zoom === entry ? "timeline-zoom-chip--active" : ""
             }`}
             onClick={() => onZoomChange(entry)}
           >
@@ -75,66 +76,82 @@ export function TimelineControls({
       </div>
 
       <div className="timeline-controls__main-row">
-        <div className="timeline-controls__transport">
+        <div className="timeline-controls__transport-rail">
+          <span className="timeline-controls__timecode">
+            {formatUtcTimestamp(displayTimestamp)}
+          </span>
+          <div className="timeline-controls__transport">
+            <button
+              type="button"
+              className="timeline-transport-button"
+              onClick={onSkipBackward}
+              disabled={!canPlay}
+              aria-label="Skip backward"
+            >
+              <SkipBack size={16} strokeWidth={1.8} />
+            </button>
+            <button
+              type="button"
+              className="timeline-play-button"
+              onClick={onTogglePlay}
+              disabled={!canPlay}
+              aria-label={isPlaying ? "Pause playback" : "Start playback"}
+            >
+              {isPlaying ? (
+                <Pause size={16} strokeWidth={2} />
+              ) : (
+                <Play size={16} strokeWidth={2} className="timeline-play-button__icon" />
+              )}
+            </button>
+            <button
+              type="button"
+              className="timeline-transport-button"
+              onClick={onSkipForward}
+              disabled={!canPlay}
+              aria-label="Skip forward"
+            >
+              <SkipForward size={16} strokeWidth={1.8} />
+            </button>
+          </div>
           <button
             type="button"
-            className="timeline-icon-button"
-            onClick={onSkipBackward}
+            className="timeline-controls__rate-button"
+            onClick={onCyclePlaybackRate}
             disabled={!canPlay}
-            aria-label="Skip backward"
+            aria-label={`Playback rate ${playbackRate}x`}
           >
-            {"<<"}
-          </button>
-          <button
-            type="button"
-            className="timeline-play-button"
-            onClick={onTogglePlay}
-            disabled={!canPlay}
-          >
-            {isPlaying ? "Pause" : "Play"}
-          </button>
-          <button
-            type="button"
-            className="timeline-icon-button"
-            onClick={onSkipForward}
-            disabled={!canPlay}
-            aria-label="Skip forward"
-          >
-            {">>"}
+            {playbackRate}x
           </button>
         </div>
 
         <div className="timeline-controls__status">
-          <span className="timeline-status-pill timeline-status-pill--clock">
-            {formatUtcTimestamp(displayTimestamp)}
-          </span>
           <button
             type="button"
-            className="timeline-status-pill timeline-status-pill--rate"
-            onClick={onCyclePlaybackRate}
-            disabled={!canPlay}
-          >
-            {playbackRate}x
-          </button>
-          <button
-            type="button"
-            className={`timeline-status-pill ${
-              showDetections ? "timeline-status-pill--active" : ""
+            className={`timeline-controls__badge ${
+              showDetections
+                ? "timeline-controls__badge--detection-active"
+                : ""
             }`}
             onClick={onSelectDetections}
+            aria-pressed={showDetections}
           >
+            <Tag size={12} strokeWidth={1.8} />
             Detections
           </button>
           <button
             type="button"
-            className={`timeline-status-pill ${
-              showVocalizations ? "timeline-status-pill--active" : ""
+            className={`timeline-controls__badge ${
+              showVocalizations
+                ? "timeline-controls__badge--vocalization-active"
+                : ""
             }`}
             onClick={onSelectVocalizations}
+            aria-pressed={showVocalizations}
           >
+            <AudioLines size={12} strokeWidth={1.8} />
             Vocalizations
           </button>
-          <span className="timeline-status-pill timeline-status-pill--range">
+          <span className="timeline-controls__badge timeline-controls__badge--range">
             Freq: 0-3 kHz
           </span>
         </div>

@@ -30,7 +30,7 @@ class FakeCanvasContext implements TimelineCanvasContextLike {
   }
 
   fillRect(): void {
-    this.calls.push("fillRect");
+    this.calls.push(`fillRect:${Array.from(arguments).join(":")}`);
   }
 
   fillText(text: string): void {
@@ -83,6 +83,8 @@ describe("timeline-canvas-renderer", () => {
       range,
       900,
       336,
+      "1m",
+      5,
     );
     const vocalizationWindows = buildVocalizationDrawWindows(
       buildVocalizationLanes([
@@ -98,6 +100,7 @@ describe("timeline-canvas-renderer", () => {
       sampleTimelineManifest.vocalization_types,
       336,
       "1m",
+      5,
     );
 
     drawTimelineCanvas(context, {
@@ -161,6 +164,7 @@ describe("timeline-canvas-renderer", () => {
       ],
       336,
       "1m",
+      5,
     );
 
     drawTimelineCanvas(context, {
@@ -179,5 +183,42 @@ describe("timeline-canvas-renderer", () => {
     const firstY = Number(strokeCalls[0]!.split(":")[1]);
     const secondY = Number(strokeCalls[1]!.split(":")[1]);
     expect(secondY).toBeLessThan(firstY);
+  });
+
+  it("respects overlay geometry when drawing indicator bars", () => {
+    const context = new FakeCanvasContext();
+
+    drawTimelineCanvas(context, {
+      detectionRects: [
+        {
+          detection: sampleTimelineManifest.detections[0]!,
+          fill: "rgba(64, 224, 192, 0.25)",
+          height: 8,
+          lane: 0,
+          stroke: "rgba(0, 0, 0, 0)",
+          width: 12,
+          x: 40,
+          y: 280,
+        },
+      ],
+      height: 336,
+      pixelRatio: 2,
+      tileItems: [],
+      vocalizationWindows: [
+        {
+          indicatorFill: "rgba(168, 130, 220, 0.4)",
+          indicatorWidth: 16,
+          key: "window",
+          labels: [],
+          width: 16,
+          x: 60,
+          y: 240,
+        },
+      ],
+      width: 900,
+    });
+
+    expect(context.calls).toContain("fillRect:40:280:12:8");
+    expect(context.calls).toContain("fillRect:60:0:16:336");
   });
 });

@@ -158,7 +158,6 @@ function drawTiles(
 function drawDetections(
   context: TimelineCanvasContextLike,
   detectionRects: DetectionDrawRect[],
-  height: number,
 ): void {
   if (detectionRects.length === 0) {
     return;
@@ -166,7 +165,7 @@ function drawDetections(
 
   detectionRects.forEach((rect) => {
     context.fillStyle = rect.fill;
-    context.fillRect(rect.x, 0, rect.width, height);
+    context.fillRect(rect.x, rect.y, rect.width, rect.height);
   });
 }
 
@@ -177,7 +176,12 @@ function drawVocalizationIndicators(
 ): void {
   vocalizationWindows.forEach((window) => {
     context.fillStyle = window.indicatorFill;
-    context.fillRect(window.x, 0, window.width, height);
+    context.fillRect(
+      window.x,
+      0,
+      window.indicatorWidth,
+      height,
+    );
   });
 }
 
@@ -235,7 +239,7 @@ export function drawTimelineCanvas(
   drawGrid(context, options.width, options.height);
   drawTiles(context, options.tileItems, options.height);
   drawLowerOverlayZone(context, options.width, options.height);
-  drawDetections(context, options.detectionRects, options.height);
+  drawDetections(context, options.detectionRects);
   drawVocalizationIndicators(context, options.vocalizationWindows, options.height);
   drawVocalizations(context, options.vocalizationWindows);
   context.restore();
