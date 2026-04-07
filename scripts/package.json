@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/dev.ts",
+    "session-deploy": "tsx src/session-deploy.ts",
     "typecheck": "tsc --project tsconfig.json --pretty false",
     "build": "pnpm run typecheck",
     "test": "node -e \"console.log('No script package tests are configured yet.')\"",
@@ -15,6 +16,7 @@
     "publish:timeline-data": "tsx src/publish-timeline-data.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudformation": "3.1025.0",
     "@aws-sdk/client-cloudfront": "3.1025.0",
     "@aws-sdk/client-dynamodb": "^3.1009.0",
     "@aws-sdk/client-s3": "3.1025.0",

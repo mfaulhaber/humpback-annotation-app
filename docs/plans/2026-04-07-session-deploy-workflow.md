@@ -16,14 +16,14 @@ and upload export data when new local detection jobs need to be published.
 - Modify: `CLAUDE.md`
 
 **Acceptance criteria:**
-- [ ] The repo defines `session-deploy` as an optional manual workflow for the
+- [x] The repo defines `session-deploy` as an optional manual workflow for the
       active viewer-only AWS path rather than a new default delivery phase
-- [ ] The workflow documents preconditions, including clean-tree expectations,
+- [x] The workflow documents preconditions, including clean-tree expectations,
       detached-HEAD handling, required deploy environment, and the active
       viewer-only deployment scope
-- [ ] The `.claude/commands/` entry mirrors the workflow doc and stays aligned
+- [x] The `.claude/commands/` entry mirrors the workflow doc and stays aligned
       with `docs/workflows/`
-- [ ] Repo docs that enumerate workflow files or commands include
+- [x] Repo docs that enumerate workflow files or commands include
       `session-deploy` without implying that the dormant annotation stack is
       part of this deploy path
 
@@ -41,23 +41,23 @@ and upload export data when new local detection jobs need to be published.
 - Create: `scripts/src/session-deploy.ts`
 
 **Acceptance criteria:**
-- [ ] The repository exposes a repeatable command for the smart deploy helper,
+- [x] The repository exposes a repeatable command for the smart deploy helper,
       for example `pnpm deploy:viewer`
-- [ ] The helper can detect whether the configured CloudFormation stack exists
+- [x] The helper can detect whether the configured CloudFormation stack exists
       and can resolve the deployed app bucket, data bucket, and CloudFront
       distribution outputs
-- [ ] The helper runs `pnpm cdk:synth` as a baseline check, runs a
+- [x] The helper runs `pnpm cdk:synth` as a baseline check, runs a
       machine-checkable CDK diff when the stack exists, and runs
       `pnpm cdk:deploy` only when the stack is missing or the diff reports
       infrastructure changes
-- [ ] The helper publishes the frontend bundle once deploy outputs are ready
-- [ ] The helper inspects the local export root and remote data bucket so it
+- [x] The helper publishes the frontend bundle once deploy outputs are ready
+- [x] The helper inspects the local export root and remote data bucket so it
       publishes export data when remote `index.json` is missing, local
       `index.json` changed, or a local job is missing a remote
       `<jobId>/manifest.json`
-- [ ] The helper supports dry-run reporting plus force/skip flags for the data
+- [x] The helper supports dry-run reporting plus force/skip flags for the data
       publish path
-- [ ] The helper prints a concise summary of executed steps, skipped steps, and
+- [x] The helper prints a concise summary of executed steps, skipped steps, and
       resulting deployment identifiers or URLs
 
 **Verification:**
@@ -76,13 +76,13 @@ and upload export data when new local detection jobs need to be published.
 - Modify: supporting repo docs as needed
 
 **Acceptance criteria:**
-- [ ] README explains when to use `session-deploy`, which environment variables
+- [x] README explains when to use `session-deploy`, which environment variables
       must be set, and how the smart data-upload heuristic behaves
-- [ ] The deploy environment example documents the inputs needed for
+- [x] The deploy environment example documents the inputs needed for
       first-time deploys, redeploys, and local export-root based data publishes
-- [ ] The docs explain how to force a data publish when an existing exported
+- [x] The docs explain how to force a data publish when an existing exported
       job changed without adding a new job ID
-- [ ] All deploy-facing docs remain truthful about what is implemented versus
+- [x] All deploy-facing docs remain truthful about what is implemented versus
       still manual or future work
 
 **Verification:**

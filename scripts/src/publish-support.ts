@@ -3,10 +3,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  CloudFormationClient,
+  DescribeStacksCommand,
+} from "@aws-sdk/client-cloudformation";
+import {
   CloudFrontClient,
   CreateInvalidationCommand,
 } from "@aws-sdk/client-cloudfront";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 export const DEFAULT_AWS_REGION = "us-west-2";
 const CLOUDFRONT_REGION = "us-east-1";
@@ -102,6 +111,12 @@ export function createS3Client(region = DEFAULT_AWS_REGION): S3Client {
 
 export function createCloudFrontClient(): CloudFrontClient {
   return new CloudFrontClient({ region: CLOUDFRONT_REGION });
+}
+
+export function createCloudFormationClient(
+  region = DEFAULT_AWS_REGION,
+): CloudFormationClient {
+  return new CloudFormationClient({ region });
 }
 
 export function runFrontendBuild(): void {
@@ -218,8 +233,170 @@ async function listFiles(directory: string): Promise<string[]> {
   return files.sort();
 }
 
+export function loadEnvFileIfPresent(filePath: string): void {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const contents = fs.readFileSync(filePath, "utf8");
+  for (const line of contents.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const match = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/.exec(trimmed);
+    if (!match) {
+      continue;
+    }
+
+    const key = match[1];
+    const rawValue = match[2] ?? "";
+    if (!key) {
+      continue;
+    }
+
+    if (process.env[key] !== undefined) {
+      continue;
+    }
+
+    const value = stripWrappingQuotes(rawValue.trim());
+    process.env[key] = value;
+  }
+}
+
+export async function doesS3ObjectExist(
+  client: S3Client,
+  bucket: string,
+  key: string,
+): Promise<boolean> {
+  try {
+    await client.send(
+      new HeadObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+    return true;
+  } catch (error: unknown) {
+    if (isObjectMissingError(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+export async function readS3ObjectText(
+  client: S3Client,
+  bucket: string,
+  key: string,
+): Promise<string | null> {
+  try {
+    const response = await client.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+
+    if (!response.Body) {
+      throw new Error(`S3 object had no response body: s3://${bucket}/${key}`);
+    }
+
+    return await bodyToString(response.Body);
+  } catch (error: unknown) {
+    if (isObjectMissingError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function describeStack(
+  client: CloudFormationClient,
+  stackName: string,
+) {
+  try {
+    const response = await client.send(
+      new DescribeStacksCommand({
+        StackName: stackName,
+      }),
+    );
+
+    return response.Stacks?.[0] ?? null;
+  } catch (error: unknown) {
+    if (isStackMissingError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
 function toPosix(filePath: string): string {
   return filePath.split(path.sep).join("/");
+}
+
+function stripWrappingQuotes(value: string): string {
+  if (
+    (value.startsWith("\"") && value.endsWith("\"")) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+
+  return value;
+}
+
+async function bodyToString(body: unknown): Promise<string> {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "transformToString" in body &&
+    typeof body.transformToString === "function"
+  ) {
+    return await body.transformToString();
+  }
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of body as AsyncIterable<Buffer | string>) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function isObjectMissingError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const metadata = error as Error & {
+    $metadata?: { httpStatusCode?: number };
+    name?: string;
+  };
+
+  return (
+    metadata.name === "NoSuchKey" ||
+    metadata.name === "NotFound" ||
+    metadata.$metadata?.httpStatusCode === 404 ||
+    error.message.includes("Not Found")
+  );
+}
+
+function isStackMissingError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const metadata = error as Error & { name?: string };
+
+  return (
+    metadata.name === "ValidationError" &&
+    error.message.includes("does not exist")
+  );
 }
 
 function contentTypeFor(filePath: string): string {

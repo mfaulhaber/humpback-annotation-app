@@ -66,6 +66,17 @@ workflow file in `docs/workflows/` with the detailed steps.
   merge, report the blocker instead of forcing around it
 - Return to a clean `main`
 
+## Optional Operational Workflow
+
+### Deploy (`docs/workflows/session-deploy.md`)
+- Use only when the user explicitly asks to deploy or redeploy the active
+  viewer-only AWS stack
+- This workflow is manual and separate from the normal
+  context/design/plan/implement/review/finish sequence
+- It may synth, diff, deploy, publish the app bundle, and publish timeline
+  export data when new local jobs are detected or the user forces a data
+  upload
+
 ## Key Constraints
 
 - Package manager: `pnpm` only

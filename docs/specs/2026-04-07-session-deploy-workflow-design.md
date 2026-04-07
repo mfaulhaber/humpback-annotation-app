@@ -1,7 +1,7 @@
 # Session Deploy Workflow Design
 
 **Date**: 2026-04-07
-**Status**: Draft
+**Status**: Accepted
 **Audience**: Humpback Timeline Viewer contributors
 
 ## 1. Summary
