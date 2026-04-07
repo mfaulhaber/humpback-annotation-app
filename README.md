@@ -118,6 +118,7 @@ The active deployment path is viewer-only:
 - public entry point: one CloudFront distribution
 - app hosting: private S3 app bucket
 - timeline data hosting: private S3 data bucket
+- both S3 buckets are retained and deployed with versioning disabled
 - legacy annotation API, DynamoDB, auth, and `/api/*` routes are not part of
   this publish path
 
