@@ -26,14 +26,31 @@ describe("timeline-contract", () => {
     expect(isTimelineIndex({ timelines: [{ ...sampleTimelineEntry, job_id: 42 }] })).toBe(
       false,
     );
+    expect(
+      isTimelineIndex({
+        timelines: [{ ...sampleTimelineEntry, job_id: "demo.v1" }],
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects manifests whose job id is not a UUID", () => {
+    expect(
+      isTimelineManifest({
+        ...sampleTimelineManifest,
+        job: {
+          ...sampleTimelineManifest.job,
+          id: "demo.v1",
+        },
+      }),
+    ).toBe(false);
   });
 
   it("builds zero-padded asset paths and time ranges", () => {
     expect(tilePath(sampleTimelineManifest.job.id, "5m", 3)).toBe(
-      "/data/demo-job/tiles/5m/tile_0003.png",
+      "/data/550e8400-e29b-41d4-a716-446655440000/tiles/5m/tile_0003.png",
     );
     expect(audioChunkPath(sampleTimelineManifest.job.id, 12)).toBe(
-      "/data/demo-job/audio/chunk_0012.mp3",
+      "/data/550e8400-e29b-41d4-a716-446655440000/audio/chunk_0012.mp3",
     );
     expect(tileTimeRange(sampleTimelineManifest, "1h", 1)).toEqual({
       start: 1_711_933_200,

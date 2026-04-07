@@ -99,6 +99,15 @@ function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
+function isUuid(value: unknown): value is string {
+  return (
+    isString(value) &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  );
+}
+
 function isZoomLevel(value: unknown): value is ZoomLevel {
   return isString(value) && ZOOM_LEVELS.includes(value as ZoomLevel);
 }
@@ -113,7 +122,7 @@ function isTimelineEntry(value: unknown): value is TimelineEntry {
   }
 
   return (
-    isString(value["job_id"]) &&
+    isUuid(value["job_id"]) &&
     isString(value["hydrophone_name"]) &&
     isString(value["species"]) &&
     isNumber(value["start_timestamp"]) &&
@@ -206,7 +215,7 @@ function isVocalizationType(value: unknown): value is VocalizationType {
 function isJobMetadata(value: unknown): value is JobMetadata {
   return (
     isRecord(value) &&
-    isString(value["id"]) &&
+    isUuid(value["id"]) &&
     isString(value["hydrophone_name"]) &&
     isString(value["hydrophone_id"]) &&
     isNumber(value["start_timestamp"]) &&

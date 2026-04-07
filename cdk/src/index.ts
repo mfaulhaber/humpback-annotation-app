@@ -1,2 +1,6 @@
-export const cdkBootstrapStatus =
-  "CDK stacks have not been scaffolded yet.";
+export { buildStaticViewerApp } from "./app.js";
+export {
+  STATIC_VIEWER_REGION,
+  loadStaticViewerConfig,
+  type StaticViewerCdkConfig,
+} from "./config.js";
