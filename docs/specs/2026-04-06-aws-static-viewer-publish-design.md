@@ -18,6 +18,8 @@ The dormant legacy annotation app is intentionally out of scope for this
 effort. It remains in the repository for reference, but it is not part of the
 AWS publish plan, deployment stack, or release checklist for this design.
 
+For this design, assume the primary deployment region is `us-west-2`.
+
 ## 2. Context
 
 The active repository state already points toward a static AWS deployment:
@@ -205,6 +207,12 @@ For a production-facing domain, provision:
 The stack should still support an AWS-generated CloudFront domain for early
 verification when a custom domain is not yet ready.
 
+Regional assumption:
+
+- the main infrastructure stack is deployed in `us-west-2`
+- if a custom domain is used with CloudFront, the ACM certificate must still be
+  issued in `us-east-1`
+
 ### 7.5 Caching Strategy
 
 Cache behavior should reflect file mutability:
@@ -264,6 +272,7 @@ The stack and publish commands will need a small set of explicit inputs, such
 as:
 
 - AWS account and region
+- primary deployment region fixed to `us-west-2`
 - CloudFront/domain configuration
 - target bucket names or stack outputs
 - local export root for `/data/*` publishing
@@ -328,5 +337,8 @@ The AWS publish path should be considered ready when:
 
 - The first AWS release will host the viewer at the domain root.
 - Timeline export artifacts are available from an external export process.
+- The primary infrastructure deployment region is `us-west-2`.
+- A CloudFront custom-domain certificate, if used, is the one deliberate
+  regional exception and must still live in `us-east-1`.
 - Keeping the legacy annotation app out of deployment scope is intentional, not
   temporary ambiguity.

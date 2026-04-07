@@ -1,8 +1,8 @@
 # AWS Static Viewer Publish Implementation Plan
 
 **Goal:** Publish the active humpback timeline viewer to AWS as a static
-CloudFront-backed site with same-origin `/data/*`, while keeping the legacy
-annotation app out of deployment scope.
+CloudFront-backed site with same-origin `/data/*` in `us-west-2`, while
+keeping the legacy annotation app out of deployment scope.
 **Spec:** `docs/specs/2026-04-06-aws-static-viewer-publish-design.md`
 
 ---
@@ -27,6 +27,8 @@ annotation app out of deployment scope.
 - [ ] The stack can support an initial CloudFront domain and an optional custom
       domain/TLS configuration without introducing API, Lambda, or DynamoDB
       resources
+- [ ] The primary stack targets `us-west-2`, with the CloudFront ACM
+      certificate handled as a documented `us-east-1` exception when needed
 
 **Verification:**
 - `pnpm typecheck`
