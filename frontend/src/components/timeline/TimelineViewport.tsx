@@ -130,7 +130,14 @@ export function TimelineViewport({
   );
   const trackHeight = width < 700 ? 248 : 336;
   const detectionRects = showDetections
-    ? buildDetectionDrawRects(detectionLanes, range, width, trackHeight)
+    ? buildDetectionDrawRects(
+        detectionLanes,
+        range,
+        width,
+        trackHeight,
+        zoom,
+        manifest.confidence.window_sec,
+      )
     : [];
   const vocalizationLanes = buildVocalizationLanes(visibleVocalizationWindows);
   const vocalizationDrawWindows = showVocalizations
@@ -141,6 +148,7 @@ export function TimelineViewport({
         manifest.vocalization_types,
         trackHeight,
         zoom,
+        manifest.confidence.window_sec,
       )
     : [];
   const timeTicks = getTimeTicks(range, zoom);
@@ -409,7 +417,12 @@ export function TimelineViewport({
             startTimestamp={manifest.job.start_timestamp}
             width={width}
           />
-        ) : null}
+        ) : (
+          <div
+            className="timeline-confidence-strip timeline-confidence-strip--placeholder"
+            aria-hidden="true"
+          />
+        )}
 
         <TimeAxis range={range} ticks={timeTicks} width={width} zoom={zoom} />
       </div>

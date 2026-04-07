@@ -23,6 +23,7 @@ import {
   getOverlayVisibility,
   type TimelineOverlayMode,
   shouldSyncCenterTimestampFromPlayback,
+  toggleOverlayMode,
 } from "../lib/timeline-viewer-state.js";
 
 const viewerDebug = createDebugLogger("timeline:viewer");
@@ -314,7 +315,11 @@ export function TimelineViewerPage() {
               : centerTimestamp;
             void handleSeek(baseTimestamp + getPanStepSeconds(zoom));
           }}
-          onSelectDetections={() => setOverlayMode("detections")}
+          onSelectDetections={() =>
+            setOverlayMode((current) =>
+              toggleOverlayMode(current, "detections"),
+            )
+          }
           onTogglePlay={() => {
             const interactionTimestamp = playback.isPlaying
               ? playback.readLiveTimestamp()
@@ -327,7 +332,11 @@ export function TimelineViewerPage() {
             });
             void playback.togglePlay(interactionTimestamp);
           }}
-          onSelectVocalizations={() => setOverlayMode("vocalizations")}
+          onSelectVocalizations={() =>
+            setOverlayMode((current) =>
+              toggleOverlayMode(current, "vocalizations"),
+            )
+          }
           onZoomChange={setZoom}
         />
 

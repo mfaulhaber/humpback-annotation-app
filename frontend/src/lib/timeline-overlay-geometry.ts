@@ -33,6 +33,7 @@ export interface VocalizationDrawLabel {
 
 export interface VocalizationDrawWindow {
   indicatorFill: string;
+  indicatorWidth: number;
   key: string;
   labels: VocalizationDrawLabel[];
   width: number;
@@ -45,6 +46,7 @@ export const VOCALIZATION_INDICATOR_FILL = "rgba(168, 130, 220, 0.4)";
 export const VOCALIZATION_CHIP_HEIGHT = 14;
 export const VOCALIZATION_LANE_GAP = 6;
 export const LOWER_OVERLAY_STACK_BOTTOM_OFFSET = 46;
+export const THIN_INDICATOR_WIDTH = 3;
 export const VOCALIZATION_LABEL_PALETTE = [
   "rgb(232, 121, 249)",
   "rgb(125, 211, 252)",
@@ -65,10 +67,18 @@ export function buildDetectionDrawRects(
   range: TimeRange,
   width: number,
   trackHeight: number,
+  zoom: ZoomLevel,
+  indicatorWindowSeconds: number,
 ): DetectionDrawRect[] {
+  const indicatorWidth = getIndicatorWidth(
+    range,
+    width,
+    zoom,
+    indicatorWindowSeconds,
+  );
+
   return lanes.map((lane) => {
     const x = timeToPixel(lane.detection.start_utc, range, width);
-    const endX = timeToPixel(lane.detection.end_utc, range, width);
 
     return {
       detection: lane.detection,
@@ -76,7 +86,7 @@ export function buildDetectionDrawRects(
       height: trackHeight,
       lane: lane.lane,
       stroke: "rgba(0, 0, 0, 0)",
-      width: Math.max(4, endX - x),
+      width: indicatorWidth,
       x,
       y: 0,
     };
@@ -117,6 +127,10 @@ function shouldRenderVocalizationLabels(zoom: ZoomLevel): boolean {
   return zoom === "5m" || zoom === "1m";
 }
 
+function shouldUseWindowScaledIndicatorWidth(zoom: ZoomLevel): boolean {
+  return zoom === "15m" || zoom === "5m" || zoom === "1m";
+}
+
 function formatVocalizationLabelText(type: string, zoom: ZoomLevel): string {
   const trimmed = type.trim();
   if (!trimmed) {
@@ -135,6 +149,30 @@ function fallbackVocalizationColor(type: string): string {
   return VOCALIZATION_LABEL_PALETTE[value % VOCALIZATION_LABEL_PALETTE.length]!;
 }
 
+function getIndicatorWidth(
+  range: TimeRange,
+  width: number,
+  zoom: ZoomLevel,
+  indicatorWindowSeconds: number,
+): number {
+  if (
+    range.span <= 0 ||
+    width <= 0 ||
+    indicatorWindowSeconds <= 0
+  ) {
+    return THIN_INDICATOR_WIDTH;
+  }
+
+  if (!shouldUseWindowScaledIndicatorWidth(zoom)) {
+    return THIN_INDICATOR_WIDTH;
+  }
+
+  return Math.max(
+    THIN_INDICATOR_WIDTH,
+    Math.round((indicatorWindowSeconds / range.span) * width),
+  );
+}
+
 export function buildVocalizationDrawWindows(
   windows: VocalizationLaneWindow[],
   range: TimeRange,
@@ -142,9 +180,16 @@ export function buildVocalizationDrawWindows(
   types: VocalizationType[],
   trackHeight: number,
   zoom: ZoomLevel,
+  indicatorWindowSeconds: number,
 ): VocalizationDrawWindow[] {
   const colorByType = buildVocalizationColorMap(types);
   const showLabels = shouldRenderVocalizationLabels(zoom);
+  const indicatorWidth = getIndicatorWidth(
+    range,
+    width,
+    zoom,
+    indicatorWindowSeconds,
+  );
   const maxLabelsPerWindow = Math.max(
     1,
     ...windows.map((window) =>
@@ -183,6 +228,7 @@ export function buildVocalizationDrawWindows(
 
     return {
       indicatorFill: VOCALIZATION_INDICATOR_FILL,
+      indicatorWidth,
       key: window.key,
       labels,
       width: Math.max(24, right - left),

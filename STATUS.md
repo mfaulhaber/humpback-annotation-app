@@ -34,9 +34,9 @@ TIMELINE_EXPORT_ROOT=/path/to/export/data pnpm dev:timeline
   - canvas-backed viewport rendering for the spectrogram track
   - live playback-clock-driven scrolling for smooth fine-zoom motion
   - compact lower-edge confidence strip rendering in detection mode only
-  - full-height detection window indicators in detection mode
-  - exclusive detection or vocalization control modes
-  - compact bottom-up vocalization lanes with full-height vocalization window indicators
+  - full-height detection window indicators, with 5-second-width bars at `15m`/`5m`/`1m` and thin bars at `1h+`
+  - exclusive detection or vocalization control modes that can also be toggled off
+  - compact bottom-up vocalization lanes with full-height vocalization window indicators sized the same way
   - chunk-based audio playback controls
 - Legacy annotation routes removed from the mounted frontend router so the old
   UI is no longer reachable from the active app shell

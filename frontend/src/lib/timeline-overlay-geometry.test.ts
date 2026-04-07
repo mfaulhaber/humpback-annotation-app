@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DETECTION_INDICATOR_FILL,
   LOWER_OVERLAY_STACK_BOTTOM_OFFSET,
+  THIN_INDICATOR_WIDTH,
   VOCALIZATION_LABEL_PALETTE,
   VOCALIZATION_INDICATOR_FILL,
   VOCALIZATION_CHIP_HEIGHT,
@@ -13,7 +14,7 @@ import {
 import { type VocalizationLaneWindow } from "./timeline-math.js";
 
 describe("timeline-overlay-geometry", () => {
-  it("places detection rectangles across the full timeline-track height", () => {
+  it("uses a full-height detection rectangle with a 5-second width at fine zooms", () => {
     const rects = buildDetectionDrawRects(
       [
         {
@@ -31,13 +32,43 @@ describe("timeline-overlay-geometry", () => {
       { start: 0, end: 100, span: 100 },
       500,
       320,
+      "1m",
+      5,
     );
 
     expect(rects[0]).toMatchObject({
       fill: DETECTION_INDICATOR_FILL,
       height: 320,
+      width: 25,
       y: 0,
     });
+  });
+
+  it("keeps coarse zoom detection indicators thin", () => {
+    const rects = buildDetectionDrawRects(
+      [
+        {
+          detection: {
+            row_id: "d1",
+            start_utc: 10,
+            end_utc: 20,
+            avg_confidence: 0.8,
+            peak_confidence: 0.92,
+            label: "song",
+          },
+          lane: 0,
+        },
+      ],
+      { start: 0, end: 3_600, span: 3_600 },
+      500,
+      320,
+      "1h",
+      5,
+    );
+
+    expect(rects[0]?.height).toBe(320);
+    expect(rects[0]?.width).toBe(THIN_INDICATOR_WIDTH);
+    expect(rects[0]?.y).toBe(0);
   });
 
   it("uses forgiving hit testing for the slim detection band", () => {
@@ -107,12 +138,14 @@ describe("timeline-overlay-geometry", () => {
       ],
       320,
       "1m",
+      5,
     );
 
     expect(drawWindows[0]?.y).toBeGreaterThan(drawWindows[1]!.y);
     expect(drawWindows[0]?.y).toBe(
       320 - LOWER_OVERLAY_STACK_BOTTOM_OFFSET - VOCALIZATION_CHIP_HEIGHT,
     );
+    expect(drawWindows[0]?.indicatorWidth).toBe(25);
     expect(drawWindows[0]?.indicatorFill).toBe(VOCALIZATION_INDICATOR_FILL);
     expect(drawWindows[0]?.labels[0]?.textColor).toBe(
       VOCALIZATION_LABEL_PALETTE[0],
@@ -145,6 +178,7 @@ describe("timeline-overlay-geometry", () => {
       [{ id: 1, name: "Ascending Moan" }],
       320,
       "15m",
+      5,
     );
     const at5m = buildVocalizationDrawWindows(
       windows,
@@ -153,6 +187,7 @@ describe("timeline-overlay-geometry", () => {
       [{ id: 1, name: "Ascending Moan" }],
       320,
       "5m",
+      5,
     );
     const at1m = buildVocalizationDrawWindows(
       windows,
@@ -161,6 +196,7 @@ describe("timeline-overlay-geometry", () => {
       [{ id: 1, name: "Ascending Moan" }],
       320,
       "1m",
+      5,
     );
 
     expect(at15m[0]?.labels).toEqual([]);
@@ -202,6 +238,7 @@ describe("timeline-overlay-geometry", () => {
       ],
       320,
       "1m",
+      5,
     );
 
     expect(drawWindows[0]?.labels[0]?.textColor).not.toBe(

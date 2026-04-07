@@ -1,6 +1,6 @@
 const PLAYBACK_SYNC_EPSILON = 0.001;
 
-export type TimelineOverlayMode = "detections" | "vocalizations";
+export type TimelineOverlayMode = "none" | "detections" | "vocalizations";
 
 export function shouldSyncCenterTimestampFromPlayback(
   centerTimestamp: number,
@@ -23,4 +23,11 @@ export function getOverlayVisibility(mode: TimelineOverlayMode): {
     showDetections: mode === "detections",
     showVocalizations: mode === "vocalizations",
   };
+}
+
+export function toggleOverlayMode(
+  currentMode: TimelineOverlayMode,
+  requestedMode: Exclude<TimelineOverlayMode, "none">,
+): TimelineOverlayMode {
+  return currentMode === requestedMode ? "none" : requestedMode;
 }
