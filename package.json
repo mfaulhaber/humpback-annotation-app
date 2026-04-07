@@ -12,6 +12,7 @@
     "preinstall": "node ./scripts/check-node.mjs",
     "dev": "pnpm --filter @humpback/scripts run dev",
     "dev:timeline": "pnpm --filter @humpback/frontend dev",
+    "deploy:viewer": "pnpm --filter @humpback/scripts run session-deploy",
     "typecheck": "pnpm -r --if-present run typecheck",
     "build": "pnpm -r --if-present run build",
     "test": "pnpm --filter @humpback/frontend test",

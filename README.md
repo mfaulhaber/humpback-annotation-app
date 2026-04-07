@@ -89,6 +89,7 @@ MEDIA_ROOT=/path/to/data/root pnpm dev --ingest /path/to/data/root/positives/hum
 | `pnpm cdk:synth` | Synthesize the viewer-only CloudFront/S3 stack |
 | `pnpm cdk:diff` | Diff the viewer-only CloudFront/S3 stack |
 | `pnpm cdk:deploy` | Deploy the viewer-only CloudFront/S3 stack |
+| `pnpm deploy:viewer` | Smart deploy/redeploy flow for the active viewer stack: synth, diff/deploy when needed, publish app, and upload new export data when detected |
 | `pnpm publish:viewer:app` | Upload the built frontend bundle to the deployed app bucket |
 | `pnpm publish:viewer:data -- --path <export-root>` | Upload one export root to the deployed data bucket |
 | `pnpm --filter @humpback/api dev` | Start API server only |
@@ -131,6 +132,18 @@ directory into the bucket.
 Copy `.env.deploy.example` to `.env.deploy` or export the same variables in
 your shell.
 
+Preferred manual deploy workflow:
+
+```bash
+pnpm deploy:viewer -- --dry-run
+pnpm deploy:viewer
+```
+
+The smart helper loads `.env.deploy` when present, runs `pnpm cdk:synth`,
+checks whether the viewer stack already exists, deploys only when the stack is
+missing or the CDK diff changed, resolves stack outputs automatically, and then
+publishes the viewer bundle.
+
 Minimum inputs:
 
 - `AWS_REGION=us-west-2`
@@ -160,6 +173,9 @@ After deploy, capture the stack outputs for:
 - CloudFront distribution ID
 - CloudFront domain name
 
+The lower-level `pnpm cdk:*` commands remain available when you want manual
+control, but `pnpm deploy:viewer` is the preferred operational path.
+
 ### Publish The Viewer Bundle
 
 ```bash
@@ -182,6 +198,27 @@ pnpm publish:viewer:data -- --path /path/to/export/root
 The export root must contain `index.json` and job folders. The publish command
 uploads that root directly to the data bucket and invalidates `/data/index.json`
 plus any changed manifest paths.
+
+`pnpm deploy:viewer` can do this automatically when:
+
+- the deployed `index.json` is missing
+- the deployed `index.json` differs from the local export root
+- a local `job_id` from `index.json` is missing a remote `manifest.json`
+
+If an existing job kept the same `job_id` but its manifest, tiles, or audio
+changed in place, rerun with:
+
+```bash
+pnpm deploy:viewer -- --force-data
+```
+
+Useful deploy-helper overrides:
+
+```bash
+pnpm deploy:viewer -- --path /path/to/export/root
+pnpm deploy:viewer -- --skip-data
+pnpm deploy:viewer -- --allow-dirty
+```
 
 ### Viewer Rendering Notes
 

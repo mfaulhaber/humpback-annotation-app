@@ -68,6 +68,7 @@ for custom domains.
   - Synthesize the viewer stack: `pnpm cdk:synth`
   - Diff the viewer stack: `pnpm cdk:diff`
   - Deploy the viewer stack: `pnpm cdk:deploy`
+  - Run the smart viewer deploy/redeploy flow: `pnpm deploy:viewer`
   - Publish the viewer app bundle: `pnpm publish:viewer:app`
   - Publish timeline export data: `pnpm publish:viewer:data -- --path <dir>`
 
@@ -249,6 +250,7 @@ humpback-annotation-app/
 │       ├── session-begin.md
 │       ├── session-plan.md
 │       ├── session-implement.md
+│       ├── session-deploy.md
 │       ├── session-debug.md
 │       ├── session-review.md
 │       └── session-end.md
@@ -272,4 +274,5 @@ humpback-annotation-app/
   containing `index.json` and exported job folders
 - `MEDIA_ROOT` defaults to `./local_media` but can point at a real data root
 - Spectrograms are nullable; the UI and API must handle missing spectrograms
-- Production auth and cloud deployment remain planned work
+- Active viewer cloud deployment is implemented; production auth for the
+  dormant legacy stack and broader automation remain planned work
