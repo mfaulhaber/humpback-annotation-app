@@ -13,6 +13,7 @@ import {
 import {
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -312,6 +313,40 @@ export async function readS3ObjectText(
 
     throw error;
   }
+}
+
+export async function listS3Objects(
+  client: S3Client,
+  bucket: string,
+): Promise<Array<{ key: string; size: number }>> {
+  const objects: Array<{ key: string; size: number }> = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const response = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        ContinuationToken: continuationToken,
+      }),
+    );
+
+    for (const object of response.Contents ?? []) {
+      if (!object.Key) {
+        continue;
+      }
+
+      objects.push({
+        key: object.Key,
+        size: object.Size ?? 0,
+      });
+    }
+
+    continuationToken = response.IsTruncated
+      ? response.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  return objects;
 }
 
 export async function describeStack(

@@ -2,7 +2,8 @@
 
 **Goal:** Add a manual `session-deploy` workflow command that can deploy or
 redeploy the active viewer-only AWS stack, publish the current frontend bundle,
-and upload export data when new local detection jobs need to be published.
+and verify that the deployed data bucket matches the local export root without
+automatically uploading export data.
 **Spec:** `docs/specs/2026-04-07-session-deploy-workflow-design.md`
 
 ---
@@ -52,11 +53,10 @@ and upload export data when new local detection jobs need to be published.
       infrastructure changes
 - [x] The helper publishes the frontend bundle once deploy outputs are ready
 - [x] The helper inspects the local export root and remote data bucket so it
-      publishes export data when remote `index.json` is missing, local
-      `index.json` changed, or a local job is missing a remote
-      `<jobId>/manifest.json`
-- [x] The helper supports dry-run reporting plus force/skip flags for the data
-      publish path
+      fails when objects are missing remotely, extra remotely, mismatched in
+      size, or mismatched in normalized JSON content
+- [x] The helper supports dry-run reporting plus the `--skip-data` flag for the
+      data verification path and rejects the removed `--force-data` behavior
 - [x] The helper prints a concise summary of executed steps, skipped steps, and
       resulting deployment identifiers or URLs
 
@@ -77,11 +77,11 @@ and upload export data when new local detection jobs need to be published.
 
 **Acceptance criteria:**
 - [x] README explains when to use `session-deploy`, which environment variables
-      must be set, and how the smart data-upload heuristic behaves
+      must be set, and how the data verification behavior works
 - [x] The deploy environment example documents the inputs needed for
-      first-time deploys, redeploys, and local export-root based data publishes
-- [x] The docs explain how to force a data publish when an existing exported
-      job changed without adding a new job ID
+      first-time deploys, redeploys, and local export-root based verification
+- [x] The docs explain that operators must run explicit data sync or publish
+      commands outside `session-deploy` when the bucket is out of sync
 - [x] All deploy-facing docs remain truthful about what is implemented versus
       still manual or future work
 
@@ -100,5 +100,6 @@ Run after all tasks:
 4. Manual smoke against a configured AWS environment:
    - first-deploy or redeploy path chooses the correct CDK step
    - app publish runs with resolved stack outputs
-   - data publish runs when a local detection job is absent remotely
-   - data publish is skipped with a clear reason when no new local job is found
+   - data verification fails with a clear reason when local and remote drift
+   - data verification passes when the local export root and deployed bucket
+     match

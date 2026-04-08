@@ -89,9 +89,10 @@ MEDIA_ROOT=/path/to/data/root pnpm dev --ingest /path/to/data/root/positives/hum
 | `pnpm cdk:synth` | Synthesize the viewer-only CloudFront/S3 stack |
 | `pnpm cdk:diff` | Diff the viewer-only CloudFront/S3 stack |
 | `pnpm cdk:deploy` | Deploy the viewer-only CloudFront/S3 stack |
-| `pnpm deploy:viewer` | Smart deploy/redeploy flow for the active viewer stack: synth, diff/deploy when needed, publish app, and upload new export data when detected |
+| `pnpm deploy:viewer` | Smart deploy/redeploy flow for the active viewer stack: synth, diff/deploy when needed, publish app, and verify deployed export parity against the local export root |
 | `pnpm publish:viewer:app` | Upload the built frontend bundle to the deployed app bucket |
 | `pnpm publish:viewer:data -- --path <export-root>` | Upload one export root to the deployed data bucket |
+| `pnpm upload:viewer:missing -- --dry-run` | Compare the local export root with the deployed data bucket and optionally upload only the missing viewer data objects |
 | `pnpm --filter @humpback/api dev` | Start API server only |
 | `pnpm --filter @humpback/frontend dev` | Start the timeline viewer frontend only |
 
@@ -200,18 +201,27 @@ The export root must contain `index.json` and job folders. The publish command
 uploads that root directly to the data bucket and invalidates `/data/index.json`
 plus any changed manifest paths.
 
-`pnpm deploy:viewer` can do this automatically when:
+`pnpm deploy:viewer` no longer uploads timeline export data. Instead, after the
+infrastructure and app publish steps, it verifies that the deployed data bucket
+matches the local export root.
 
-- the deployed `index.json` is missing
-- the deployed `index.json` differs from the local export root
-- a local `job_id` from `index.json` is missing a remote `manifest.json`
+The verification fails when:
 
-If an existing job kept the same `job_id` but its manifest, tiles, or audio
-changed in place, rerun with:
+- local files are missing remotely
+- remote files exist that are not present locally
+- object sizes differ
+- JSON files differ in content
+
+When that happens, use the missing-object uploader or the lower-level publish
+command explicitly:
 
 ```bash
-pnpm deploy:viewer -- --force-data
+pnpm upload:viewer:missing -- --dry-run
+pnpm upload:viewer:missing
 ```
+
+If the verification reports extra remote keys, remove those stale S3 objects
+separately before rerunning `pnpm deploy:viewer`.
 
 Useful deploy-helper overrides:
 
@@ -220,6 +230,9 @@ pnpm deploy:viewer -- --path /path/to/export/root
 pnpm deploy:viewer -- --skip-data
 pnpm deploy:viewer -- --allow-dirty
 ```
+
+`--skip-data` now skips the export parity check entirely, which is useful for
+app-only deploys.
 
 ### Viewer Rendering Notes
 

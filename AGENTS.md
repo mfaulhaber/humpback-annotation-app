@@ -73,9 +73,10 @@ workflow file in `docs/workflows/` with the detailed steps.
   viewer-only AWS stack
 - This workflow is manual and separate from the normal
   context/design/plan/implement/review/finish sequence
-- It may synth, diff, deploy, publish the app bundle, and publish timeline
-  export data when new local jobs are detected or the user forces a data
-  upload
+- It may synth, diff, deploy, publish the app bundle, and verify that the
+  deployed timeline data matches the local export root
+- Timeline data upload or sync remains a separate manual operator step outside
+  `session-deploy`
 
 ## Key Constraints
 
