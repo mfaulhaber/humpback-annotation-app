@@ -2,7 +2,8 @@
 
 Manual operational workflow for deploying or redeploying the active
 viewer-only AWS stack. Use it only when the user explicitly wants to publish
-the current viewer build or export data to AWS.
+the current viewer build to AWS and verify that the local export root matches
+the deployed data bucket.
 
 ## Preconditions
 
@@ -34,7 +35,6 @@ the current viewer build or export data to AWS.
      - `pnpm deploy:viewer`
    - Useful overrides:
      - `pnpm deploy:viewer -- --path /abs/export/root`
-     - `pnpm deploy:viewer -- --force-data`
      - `pnpm deploy:viewer -- --skip-data`
      - `pnpm deploy:viewer -- --allow-dirty` only when the user explicitly
        wants to deploy uncommitted changes
@@ -47,23 +47,25 @@ the current viewer build or export data to AWS.
    - Resolve the deployed bucket names and CloudFront distribution ID from the
      stack outputs
    - Publish the viewer app bundle
-   - Publish timeline export data when the local export root contains an
-     unpublished job, when the deployed `index.json` is missing, or when the
-     deployed `index.json` differs from the local copy
+   - Verify that the deployed data bucket matches the local export root
+   - Fail the workflow when the bucket is missing local objects, contains extra
+     remote objects, or has size/JSON mismatches
 
 5. **Report the result**
-   - State whether `cdk deploy`, app publish, and data publish ran or were
+   - State whether `cdk deploy`, app publish, and data verification ran or were
      skipped
    - Include the viewer URL and data URL when available
-   - If data publish was skipped because only existing job contents changed,
-     mention `--force-data`
+   - If data verification fails, point to `pnpm upload:viewer:missing` for a
+     manual missing-object upload and note that extra remote keys must be
+     removed separately
 
 ## Does NOT
 
 - Generate timeline export artifacts from source media
 - Deploy the dormant annotation API, DynamoDB tables, or auth path
-- Replace the lower-level `pnpm cdk:*` and `pnpm publish:viewer:*` commands
-  for operators who want manual control
+- Upload timeline export data automatically
+- Replace the lower-level `pnpm cdk:*`, `pnpm publish:viewer:*`, or
+  `pnpm upload:viewer:missing` commands for operators who want manual control
 
 ## Output
 

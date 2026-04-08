@@ -24,7 +24,8 @@
     "cdk:diff": "pnpm --filter @humpback/cdk run diff",
     "cdk:deploy": "pnpm --filter @humpback/cdk run deploy",
     "publish:viewer:app": "pnpm --filter @humpback/scripts run publish:static-viewer",
-    "publish:viewer:data": "pnpm --filter @humpback/scripts run publish:timeline-data"
+    "publish:viewer:data": "pnpm --filter @humpback/scripts run publish:timeline-data",
+    "upload:viewer:missing": "bash ./scripts/upload-missing-to-s3.sh"
   },
   "devDependencies": {
     "@types/node": "22.19.15",

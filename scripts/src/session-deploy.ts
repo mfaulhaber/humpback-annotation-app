@@ -9,9 +9,9 @@ import {
   createCloudFormationClient,
   createS3Client,
   describeStack,
-  doesS3ObjectExist,
   getRepoRoot,
   hasFlag,
+  listS3Objects,
   loadEnvFileIfPresent,
   readFlagValue,
   readS3ObjectText,
@@ -46,13 +46,13 @@ interface DeployOutputs {
 
 interface StepResult {
   label: string;
-  outcome: "ran" | "skipped";
+  outcome: "failed" | "ran" | "skipped";
   reason?: string;
 }
 
-interface DataPublishDecision {
+interface DataVerificationDecision {
+  matches: boolean;
   reason: string;
-  shouldPublish: boolean;
 }
 
 function log(message: string): void {
@@ -304,69 +304,125 @@ function normalizeJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-async function decideDataPublish(
+async function listLocalExportObjects(
+  exportRoot: string,
+): Promise<Array<{ key: string; size: number }>> {
+  const objects: Array<{ key: string; size: number }> = [];
+
+  async function walk(currentDirectory: string): Promise<void> {
+    const entries = await fs.promises.readdir(currentDirectory, {
+      withFileTypes: true,
+    });
+
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) {
+        continue;
+      }
+
+      const absolutePath = path.join(currentDirectory, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolutePath);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      const stats = await fs.promises.stat(absolutePath);
+      const relativePath = path.relative(exportRoot, absolutePath).split(path.sep).join("/");
+      objects.push({
+        key: relativePath,
+        size: stats.size,
+      });
+    }
+  }
+
+  await walk(exportRoot);
+  return objects.sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function summarizeKeys(label: string, keys: string[], maxKeys = 5): string | null {
+  if (keys.length === 0) {
+    return null;
+  }
+
+  const sample = keys.slice(0, maxKeys).join(", ");
+  const suffix = keys.length > maxKeys ? `, +${keys.length - maxKeys} more` : "";
+  return `${label}: ${sample}${suffix}`;
+}
+
+async function verifyDataParity(
   exportRoot: string,
   dataBucketName: string,
   region: string,
-): Promise<DataPublishDecision> {
-  const localJobIds = await validateLocalExportRoot(exportRoot);
+): Promise<DataVerificationDecision> {
+  await validateLocalExportRoot(exportRoot);
 
-  const localIndexRaw = await fs.promises.readFile(
-    path.join(exportRoot, "index.json"),
-    "utf8",
-  );
-  const localIndexNormalized = normalizeJson(JSON.parse(localIndexRaw));
+  const localObjects = await listLocalExportObjects(exportRoot);
+  const localMap = new Map(localObjects.map((object) => [object.key, object]));
   const s3Client = createS3Client(region);
-  const remoteIndexRaw = await readS3ObjectText(s3Client, dataBucketName, "index.json");
+  const remoteObjects = await listS3Objects(s3Client, dataBucketName);
+  const remoteMap = new Map(remoteObjects.map((object) => [object.key, object]));
 
-  if (!remoteIndexRaw) {
-    return {
-      reason: "remote index.json is missing",
-      shouldPublish: true,
-    };
+  const missingRemoteKeys = localObjects
+    .filter((object) => !remoteMap.has(object.key))
+    .map((object) => object.key);
+  const extraRemoteKeys = remoteObjects
+    .filter((object) => !localMap.has(object.key))
+    .map((object) => object.key);
+  const sizeMismatches = localObjects
+    .filter((object) => {
+      const remote = remoteMap.get(object.key);
+      return remote && remote.size !== object.size;
+    })
+    .map((object) => {
+      const remote = remoteMap.get(object.key);
+      return `${object.key} (local ${object.size}, remote ${remote?.size ?? 0})`;
+    });
+
+  const jsonContentMismatches: string[] = [];
+  for (const object of localObjects) {
+    if (!object.key.endsWith(".json") || missingRemoteKeys.includes(object.key)) {
+      continue;
+    }
+
+    const remoteText = await readS3ObjectText(s3Client, dataBucketName, object.key);
+    if (remoteText === null) {
+      continue;
+    }
+
+    const localText = await fs.promises.readFile(path.join(exportRoot, object.key), "utf8");
+    try {
+      const normalizedLocal = normalizeJson(JSON.parse(localText));
+      const normalizedRemote = normalizeJson(JSON.parse(remoteText));
+      if (normalizedLocal !== normalizedRemote) {
+        jsonContentMismatches.push(object.key);
+      }
+    } catch {
+      if (localText !== remoteText) {
+        jsonContentMismatches.push(object.key);
+      }
+    }
   }
 
-  let remoteIndexNormalized: string;
-  try {
-    remoteIndexNormalized = normalizeJson(JSON.parse(remoteIndexRaw));
-  } catch {
+  const mismatchParts = [
+    summarizeKeys("missing remote keys", missingRemoteKeys),
+    summarizeKeys("extra remote keys", extraRemoteKeys),
+    summarizeKeys("size mismatches", sizeMismatches),
+    summarizeKeys("json content mismatches", jsonContentMismatches),
+  ].filter((part): part is string => part !== null);
+
+  if (mismatchParts.length > 0) {
     return {
-      reason: "remote index.json is unreadable",
-      shouldPublish: true,
-    };
-  }
-
-  const missingJobIds = (
-    await Promise.all(
-      localJobIds.map(async (jobId) => {
-        const exists = await doesS3ObjectExist(
-          s3Client,
-          dataBucketName,
-          `${jobId}/manifest.json`,
-        );
-
-        return exists ? null : jobId;
-      }),
-    )
-  ).filter((jobId): jobId is string => jobId !== null);
-
-  if (missingJobIds.length > 0) {
-    return {
-      reason: `missing remote manifest(s) for ${missingJobIds.join(", ")}`,
-      shouldPublish: true,
-    };
-  }
-
-  if (remoteIndexNormalized !== localIndexNormalized) {
-    return {
-      reason: "local index.json differs from the deployed copy",
-      shouldPublish: true,
+      matches: false,
+      reason: mismatchParts.join("; "),
     };
   }
 
   return {
-    reason: `remote data already contains all ${localJobIds.length} local job(s)`,
-    shouldPublish: false,
+    matches: true,
+    reason: `bucket matches local export root across ${localObjects.length} file(s)`,
   };
 }
 
@@ -392,8 +448,14 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const allowDirty = hasFlag(args, "--allow-dirty");
   const dryRun = hasFlag(args, "--dry-run");
-  const forceData = hasFlag(args, "--force-data");
   const skipData = hasFlag(args, "--skip-data");
+
+  if (hasFlag(args, "--force-data")) {
+    throw new Error(
+      "--force-data is no longer supported. session-deploy now verifies bucket parity only; use `pnpm upload:viewer:missing` for manual data uploads.",
+    );
+  }
+
   const region = resolveAwsRegion();
   const stackName = resolveStackName();
   const steps: StepResult[] = [];
@@ -428,13 +490,11 @@ async function main(): Promise<void> {
         reason: "dry run: waits for the initial stack deploy outputs",
       });
       steps.push({
-        label: "data publish",
+        label: "data verification",
         outcome: "skipped",
         reason: skipData
           ? "--skip-data was set"
-          : forceData
-            ? "dry run: would publish data after the initial stack deploy because --force-data was set"
-            : "dry run: would evaluate and publish data after the initial stack deploy",
+          : "dry run: would verify export parity after the initial stack deploy",
       });
       printSummary(steps, null);
       return;
@@ -501,7 +561,7 @@ async function main(): Promise<void> {
 
   if (skipData) {
     steps.push({
-      label: "data publish",
+      label: "data verification",
       outcome: "skipped",
       reason: "--skip-data was set",
     });
@@ -511,7 +571,7 @@ async function main(): Promise<void> {
 
   if (!exportRoot) {
     steps.push({
-      label: "data publish",
+      label: "data verification",
       outcome: "skipped",
       reason: "no export root was provided",
     });
@@ -519,30 +579,22 @@ async function main(): Promise<void> {
     return;
   }
 
-  const dataDecision = forceData
-    ? {
-        reason: "--force-data was set",
-        shouldPublish: true,
-      }
-    : await decideDataPublish(exportRoot, outputs.dataBucketName, region);
+  const dataDecision = await verifyDataParity(exportRoot, outputs.dataBucketName, region);
 
-  if (!dataDecision.shouldPublish) {
+  if (!dataDecision.matches) {
     steps.push({
-      label: "data publish",
-      outcome: "skipped",
+      label: "data verification",
+      outcome: "failed",
       reason: dataDecision.reason,
     });
     printSummary(steps, outputs);
-    return;
+    throw new Error(
+      `Data bucket does not match the local export root. ${dataDecision.reason}. Use \`pnpm upload:viewer:missing\` to upload missing objects, use \`pnpm publish:viewer:data -- --path ${exportRoot}\` when existing remote objects need to be overwritten to match local data, and remove any extra remote keys before rerunning session-deploy.`,
+    );
   }
 
-  const dataArgs = ["publish:viewer:data", "--", "--path", exportRoot];
-  if (dryRun) {
-    dataArgs.push("--dry-run");
-  }
-  runCommand("pnpm", dataArgs, "pnpm publish:viewer:data", publishEnv);
   steps.push({
-    label: "data publish",
+    label: "data verification",
     outcome: "ran",
     reason: dataDecision.reason,
   });
