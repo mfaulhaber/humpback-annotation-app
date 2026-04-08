@@ -13,6 +13,8 @@
   --timeline-accent-warm: #f4c95d;
   --timeline-shadow: 0 20px 54px rgba(0, 0, 0, 0.26);
   --timeline-radius: 24px;
+  --timeline-shell-padding: clamp(12px, 2.4vw, 28px);
+  --timeline-viewer-gap: clamp(10px, 1.6vw, 14px);
 }
 
 *,
@@ -62,6 +64,11 @@ a {
   overflow: hidden;
 }
 
+.timeline-shell--viewer {
+  height: 100vh;
+  height: 100dvh;
+}
+
 .timeline-shell__backdrop,
 .timeline-shell__glow {
   pointer-events: none;
@@ -89,7 +96,15 @@ a {
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  padding: 28px;
+  min-height: 100dvh;
+  padding: var(--timeline-shell-padding);
+}
+
+.timeline-shell--viewer .timeline-shell__content {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .timeline-index {
@@ -304,8 +319,12 @@ a {
 .timeline-viewer {
   max-width: 1540px;
   margin: 0 auto;
-  display: grid;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  gap: var(--timeline-viewer-gap);
 }
 
 .timeline-viewer__header,
@@ -319,17 +338,17 @@ a {
 
 .timeline-viewer__header {
   display: grid;
-  gap: 14px;
-  padding: 18px 22px;
+  gap: 10px;
+  padding: 14px 18px;
   background: linear-gradient(180deg, rgba(8, 18, 30, 0.76), rgba(6, 13, 22, 0.7));
 }
 
 .timeline-viewer__meta-row {
   display: flex;
-  gap: 14px;
+  gap: 6px 14px;
   flex-wrap: wrap;
   color: var(--timeline-text-soft);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-family:
     "IBM Plex Mono",
     "SFMono-Regular",
@@ -341,6 +360,7 @@ a {
   flex-wrap: wrap;
   gap: 6px;
   align-items: baseline;
+  min-width: 0;
 }
 
 .timeline-viewer__meta-label {
@@ -349,8 +369,10 @@ a {
 
 .timeline-stage {
   display: flex;
+  flex: 1;
+  min-height: 0;
   gap: 14px;
-  padding: 12px 12px 10px;
+  padding: 10px;
   background: linear-gradient(180deg, rgba(7, 15, 24, 0.78), rgba(6, 12, 20, 0.82));
 }
 
@@ -398,12 +420,14 @@ a {
   flex: 1;
   min-width: 0;
   display: grid;
+  min-height: 0;
+  grid-template-rows: minmax(120px, 1fr) auto auto;
   gap: 6px;
 }
 
 .timeline-track {
   position: relative;
-  min-height: 448px;
+  min-height: clamp(120px, 28dvh, 260px);
   overflow: hidden;
   border-radius: 16px;
   border: 1px solid rgba(109, 176, 170, 0.12);
@@ -592,8 +616,8 @@ a {
 
 .timeline-controls {
   display: grid;
-  gap: 10px;
-  padding: 10px 14px 12px;
+  gap: 8px;
+  padding: 8px 12px 10px;
   background: linear-gradient(180deg, rgba(7, 16, 26, 0.78), rgba(5, 10, 18, 0.84));
 }
 
@@ -616,8 +640,8 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
-  min-height: 42px;
+  gap: 12px;
+  min-height: 38px;
 }
 
 .timeline-zoom-chip,
@@ -787,17 +811,11 @@ button.timeline-controls__badge:hover {
   color: #c4a8f0;
 }
 
-.timeline-controls__badge--range {
-  color: var(--timeline-accent);
-  border-color: rgba(114, 224, 192, 0.16);
-  background: rgba(17, 28, 41, 0.88);
-}
-
 .timeline-hidden-audio {
   display: none;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 760px) {
   .timeline-controls__main-row {
     grid-template-columns: 1fr;
     justify-items: center;
@@ -815,47 +833,40 @@ button.timeline-controls__badge:hover {
 }
 
 @media (max-width: 900px) {
-  .timeline-shell__content {
-    padding: 18px;
-  }
-
   .timeline-stage {
-    padding: 10px;
+    gap: 8px;
+    padding: 8px;
   }
 
   .timeline-stage__y-axis {
     display: none;
   }
 
-  .timeline-track {
-    min-height: 331px;
+  .timeline-viewer__header {
+    gap: 8px;
+    padding: 12px 14px;
   }
 
-  .timeline-viewer__header {
-    padding: 18px;
+  .timeline-viewer__meta-row {
+    gap: 4px 10px;
+    font-size: 0.76rem;
   }
 
   .timeline-controls {
-    padding: 10px 12px 12px;
+    gap: 7px;
+    padding: 8px 10px 10px;
   }
 
   .timeline-controls__main-row {
-    gap: 12px;
+    gap: 10px;
   }
 
   .timeline-controls__transport-rail {
-    gap: 12px;
+    gap: 10px;
   }
 
   .timeline-controls__transport {
-    gap: 12px;
-  }
-
-  .timeline-controls__timecode,
-  .timeline-controls__rate-button {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
+    gap: 10px;
   }
 
   .timeline-controls__transport-rail,
@@ -865,5 +876,45 @@ button.timeline-controls__badge:hover {
 
   .timeline-controls__status {
     gap: 6px;
+  }
+
+  .timeline-controls__badge {
+    padding: 4px 7px;
+  }
+
+  .timeline-play-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .timeline-transport-button {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-height: 820px) {
+  .timeline-shell--viewer .timeline-shell__content {
+    padding: 10px;
+  }
+
+  .timeline-viewer__header {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .timeline-viewer__meta-row {
+    gap: 4px 10px;
+    font-size: 0.76rem;
+  }
+
+  .timeline-stage {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .timeline-controls {
+    gap: 7px;
+    padding: 8px 10px 10px;
   }
 }

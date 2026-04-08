@@ -59,8 +59,6 @@ export function ConfidenceStrip({
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
 
     const context = canvas.getContext("2d");
     if (!context) {

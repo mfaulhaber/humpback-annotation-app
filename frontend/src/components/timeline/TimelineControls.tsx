@@ -151,9 +151,6 @@ export function TimelineControls({
             <AudioLines size={12} strokeWidth={1.8} />
             Vocalizations
           </button>
-          <span className="timeline-controls__badge timeline-controls__badge--range">
-            Freq: 0-3 kHz
-          </span>
         </div>
       </div>
     </div>
