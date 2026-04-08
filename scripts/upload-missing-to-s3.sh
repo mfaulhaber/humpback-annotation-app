@@ -130,7 +130,7 @@ prepare_local_list() {
   local extension="$1"
   local output_file="$2"
 
-  find "$EXPORT_ROOT" -type f -name "*.${extension}" \
+  find "$EXPORT_ROOT" -type f ! -name ".DS_Store" -name "*.${extension}" \
     | sed "s#^$EXPORT_ROOT/##" \
     | sort > "$output_file"
 }
