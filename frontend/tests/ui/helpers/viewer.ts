@@ -174,6 +174,22 @@ export async function clickTrackAtRatio(
   await waitForViewerStable(page);
 }
 
+export async function hoverTrackAtRatio(
+  page: Page,
+  ratio: number,
+  yRatio = 0.5,
+): Promise<void> {
+  const track = page.getByTestId(timelineTestIds.track);
+  const box = await track.boundingBox();
+
+  expect(box).not.toBeNull();
+
+  await page.mouse.move(
+    (box?.x ?? 0) + Math.max(1, Math.min((box?.width ?? 0) - 1, (box?.width ?? 0) * ratio)),
+    (box?.y ?? 0) + Math.max(1, Math.min((box?.height ?? 0) - 1, (box?.height ?? 0) * yRatio)),
+  );
+}
+
 export async function centerViewerOnCommittedFixtureTimestamp(
   page: Page,
   timestamp: number,

@@ -4,6 +4,7 @@ import {
   expectWithinTolerance,
 } from "./helpers/assertions.js";
 import {
+  hoverTrackAtRatio,
   openCommittedFixtureViewer,
   readViewerGeometry,
   resizeViewer,
@@ -71,4 +72,58 @@ test("viewer stays visible and aligned through the responsive resize sequence", 
     6,
     "desktop width after expanding back",
   );
+});
+
+test.describe("hover overlays during resize", () => {
+  test("detection hover resets cleanly when the window is resized", async ({
+    page,
+  }) => {
+    await openCommittedFixtureViewer(page, {
+      overlayMode: "detections",
+      zoom: "5m",
+    });
+
+    const tooltip = page.getByTestId("timeline-tooltip");
+
+    await hoverTrackAtRatio(page, 0.25);
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText("Detection:");
+
+    await resizeViewer(page, {
+      width: 430,
+      height: 932,
+    });
+
+    await expect(tooltip).toBeHidden();
+
+    await hoverTrackAtRatio(page, 0.25);
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText("Detection:");
+  });
+
+  test("vocalization hover resets cleanly when the window is resized", async ({
+    page,
+  }) => {
+    await openCommittedFixtureViewer(page, {
+      overlayMode: "vocalizations",
+      zoom: "5m",
+    });
+
+    const tooltip = page.getByTestId("timeline-tooltip");
+
+    await hoverTrackAtRatio(page, 0.25);
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText("Moan:");
+
+    await resizeViewer(page, {
+      width: 430,
+      height: 932,
+    });
+
+    await expect(tooltip).toBeHidden();
+
+    await hoverTrackAtRatio(page, 0.25);
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText("Moan:");
+  });
 });

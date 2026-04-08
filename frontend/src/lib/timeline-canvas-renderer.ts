@@ -12,6 +12,8 @@ export interface TimelineCanvasTileDrawItem {
 export interface TimelineCanvasRenderOptions {
   detectionRects: DetectionDrawRect[];
   height: number;
+  hoveredDetectionKey?: string | null;
+  hoveredVocalizationKey?: string | null;
   pixelRatio: number;
   tileItems: TimelineCanvasTileDrawItem[];
   vocalizationWindows: VocalizationDrawWindow[];
@@ -61,6 +63,9 @@ const GRID_COLOR = "rgba(119, 201, 188, 0.045)";
 const TILE_PLACEHOLDER = "rgba(20, 34, 54, 0.92)";
 const LOWER_BAND_BACKDROP = "rgba(6, 14, 24, 0.34)";
 const LOWER_BAND_EDGE = "rgba(111, 197, 184, 0.14)";
+const HOVER_OUTLINE_WIDTH = 1;
+const DETECTION_HOVER_OUTLINE = "rgba(142, 244, 228, 0.72)";
+const VOCALIZATION_HOVER_OUTLINE = "rgba(212, 186, 250, 0.78)";
 
 function truncateTextToWidth(
   context: TimelineCanvasContextLike,
@@ -222,6 +227,48 @@ function drawVocalizations(
   });
 }
 
+function drawHoverOutline(
+  context: TimelineCanvasContextLike,
+  hoveredDetectionKey: string | null | undefined,
+  hoveredVocalizationKey: string | null | undefined,
+  detectionRects: DetectionDrawRect[],
+  vocalizationWindows: VocalizationDrawWindow[],
+): void {
+  if (hoveredDetectionKey) {
+    const rect = detectionRects.find(
+      (candidate) => candidate.detection.row_id === hoveredDetectionKey,
+    );
+
+    if (rect) {
+      context.strokeStyle = DETECTION_HOVER_OUTLINE;
+      context.lineWidth = HOVER_OUTLINE_WIDTH;
+      context.strokeRect(
+        rect.x + 0.5,
+        rect.y + 0.5,
+        Math.max(1, rect.width - 1),
+        Math.max(1, rect.height - 1),
+      );
+    }
+  }
+
+  if (hoveredVocalizationKey) {
+    const window = vocalizationWindows.find(
+      (candidate) => candidate.key === hoveredVocalizationKey,
+    );
+
+    if (window) {
+      context.strokeStyle = VOCALIZATION_HOVER_OUTLINE;
+      context.lineWidth = HOVER_OUTLINE_WIDTH;
+      context.strokeRect(
+        window.x + 0.5,
+        0.5,
+        Math.max(1, window.width - 1),
+        Math.max(1, window.indicatorHeight - 1),
+      );
+    }
+  }
+}
+
 export function drawTimelineCanvas(
   context: TimelineCanvasContextLike,
   options: TimelineCanvasRenderOptions,
@@ -236,5 +283,12 @@ export function drawTimelineCanvas(
   drawDetections(context, options.detectionRects);
   drawVocalizationIndicators(context, options.vocalizationWindows, options.height);
   drawVocalizations(context, options.vocalizationWindows);
+  drawHoverOutline(
+    context,
+    options.hoveredDetectionKey,
+    options.hoveredVocalizationKey,
+    options.detectionRects,
+    options.vocalizationWindows,
+  );
   context.restore();
 }
