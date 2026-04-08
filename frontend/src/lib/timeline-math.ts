@@ -48,6 +48,23 @@ export function clampTimestamp(
   );
 }
 
+export function initialTimelineCenterTimestamp(
+  manifest: TimelineManifest,
+): number {
+  const startDate = new Date(manifest.job.start_timestamp * 1000);
+  const noonUtc =
+    Date.UTC(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate(),
+      12,
+      0,
+      0,
+    ) / 1000;
+
+  return clampTimestamp(manifest, noonUtc);
+}
+
 export function getViewportRange(
   manifest: TimelineManifest,
   zoom: ZoomLevel,
@@ -288,6 +305,10 @@ export function formatTimelineCardDate(timestamp: number): string {
     hour12: false,
     timeZone: "UTC",
   }).format(new Date(timestamp * 1000));
+}
+
+export function formatTimelineCardRange(start: number, end: number): string {
+  return `${formatTimelineCardDate(start)} - ${formatTimelineCardDate(end)} UTC`;
 }
 
 export function formatDurationShort(seconds: number): string {

@@ -7,16 +7,15 @@ import { TimelineViewport } from "../components/timeline/TimelineViewport.js";
 import { useTimelinePlayback } from "../hooks/useTimelinePlayback.js";
 import {
   availableZoomLevels,
-  defaultZoomForDuration,
-  manifestDuration,
+  preferredInitialZoom,
   type TimelineManifest,
   type ZoomLevel,
 } from "../lib/timeline-contract.js";
 import {
   clampTimestamp,
-  formatSpeciesLabel,
   formatTimelineSpan,
   getPanStepSeconds,
+  initialTimelineCenterTimestamp,
 } from "../lib/timeline-math.js";
 import { createDebugLogger } from "../lib/debug-log.js";
 import {
@@ -57,13 +56,8 @@ export function TimelineViewerPage() {
     fetchTimelineManifest(jobId)
       .then((response) => {
         setManifest(response);
-        const duration = manifestDuration(response);
-        const nextZoom = defaultZoomForDuration(duration);
-        const availableZooms = availableZoomLevels(response);
-        const initialZoom = availableZooms.includes(nextZoom)
-          ? nextZoom
-          : availableZooms[availableZooms.length - 1] ?? "1m";
-        const initialCenter = response.job.start_timestamp;
+        const initialZoom = preferredInitialZoom(response, "1h");
+        const initialCenter = initialTimelineCenterTimestamp(response);
 
         setZoom(initialZoom);
         setCenterTimestamp(initialCenter);
@@ -253,25 +247,23 @@ export function TimelineViewerPage() {
     <TimelineLayout chrome="viewer">
       <div className="timeline-viewer">
         <header className="timeline-viewer__header">
-          <div className="timeline-viewer__header-left">
-            <Link to="/" className="timeline-back-link">
-              Back to jobs
-            </Link>
-            <div>
-              <div className="timeline-kicker">Readonly timeline</div>
-              <h1>{manifest.job.hydrophone_name}</h1>
-              <p>
-                {formatSpeciesLabel(manifest.job.species)} / {manifest.job.model_name}{" "}
-                {manifest.job.model_version}
-              </p>
-            </div>
-          </div>
-          <div className="timeline-viewer__header-right">
-            <span className="timeline-viewer__meta-pill">
-              {formatTimelineSpan(manifest.job.start_timestamp, manifest.job.end_timestamp)}
+          <Link to="/" className="timeline-back-link">
+            Back to jobs
+          </Link>
+          <div className="timeline-viewer__meta-row">
+            <span className="timeline-viewer__meta-item">
+              <span className="timeline-viewer__meta-label">Hydrophone:</span>
+              {manifest.job.hydrophone_name}
             </span>
-            <span className="timeline-viewer__meta-pill">
-              Window selection: {manifest.job.window_selection}
+            <span className="timeline-viewer__meta-item">
+              <span className="timeline-viewer__meta-label">Model:</span>
+              {[manifest.job.model_name, manifest.job.model_version]
+                .filter(Boolean)
+                .join(" ")}
+            </span>
+            <span className="timeline-viewer__meta-item">
+              <span className="timeline-viewer__meta-label">Date Range:</span>
+              {formatTimelineSpan(manifest.job.start_timestamp, manifest.job.end_timestamp)}
             </span>
           </div>
         </header>

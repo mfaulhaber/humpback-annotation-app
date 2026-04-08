@@ -4,10 +4,12 @@ import {
   buildDetectionLanes,
   buildVocalizationLanes,
   deriveTimelineTitle,
+  formatTimelineCardRange,
   formatDurationShort,
   getViewportRange,
   getVisibleTileIndices,
   getVisibleVocalizationWindows,
+  initialTimelineCenterTimestamp,
 } from "./timeline-math.js";
 import {
   sampleTimelineEntry,
@@ -125,5 +127,30 @@ describe("timeline-math", () => {
   it("formats viewer-facing labels from timeline metadata", () => {
     expect(deriveTimelineTitle(sampleTimelineEntry)).toBe("Orcasound Lab / Ar V2 Promoted");
     expect(formatDurationShort(3_660)).toBe("1h 1m");
+    expect(
+      formatTimelineCardRange(
+        sampleTimelineEntry.start_timestamp,
+        sampleTimelineEntry.end_timestamp,
+      ),
+    ).toBe("Apr 01, 2024, 00:00 - Apr 01, 2024, 02:00 UTC");
+  });
+
+  it("starts the viewer centered on noon UTC when that time is available", () => {
+    expect(
+      initialTimelineCenterTimestamp({
+        ...sampleTimelineManifest,
+        job: {
+          ...sampleTimelineManifest.job,
+          start_timestamp: 1_711_929_600,
+          end_timestamp: 1_712_016_000,
+        },
+      }),
+    ).toBe(1_711_972_800);
+  });
+
+  it("clamps the initial center when noon falls outside the job window", () => {
+    expect(initialTimelineCenterTimestamp(sampleTimelineManifest)).toBe(
+      sampleTimelineManifest.job.end_timestamp,
+    );
   });
 });
