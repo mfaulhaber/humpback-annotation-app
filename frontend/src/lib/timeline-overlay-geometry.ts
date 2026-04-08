@@ -41,6 +41,13 @@ export interface VocalizationHoverRow {
 }
 
 export interface VocalizationDrawWindow {
+  chipBorderWidth: number;
+  chipFontSize: number;
+  chipGap: number;
+  chipHeight: number;
+  chipHorizontalPadding: number;
+  chipMaxWidth: number;
+  chipTextBaselineOffset: number;
   hoverRows: VocalizationHoverRow[];
   indicatorFill: string;
   indicatorHeight: number;
@@ -67,6 +74,17 @@ export const VOCALIZATION_LABEL_PALETTE = [
   "rgb(196, 181, 253)",
   "rgb(251, 113, 133)",
 ] as const;
+
+interface VocalizationLabelLayout {
+  chipBorderWidth: number;
+  chipFontSize: number;
+  chipGap: number;
+  chipHeight: number;
+  chipHorizontalPadding: number;
+  chipMaxWidth: number;
+  chipTextBaselineOffset: number;
+  stackBottomOffset: number;
+}
 
 export function detectionColor(detection: Detection): string {
   void detection;
@@ -134,6 +152,48 @@ export function buildVocalizationColorMap(
   return colors;
 }
 
+function getVocalizationLabelLayout(
+  trackHeight: number,
+  width: number,
+): VocalizationLabelLayout {
+  if (trackHeight <= 180 || width <= 320) {
+    return {
+      chipBorderWidth: 1,
+      chipFontSize: 7,
+      chipGap: 4,
+      chipHeight: 10,
+      chipHorizontalPadding: 3,
+      chipMaxWidth: 68,
+      chipTextBaselineOffset: 0,
+      stackBottomOffset: 34,
+    };
+  }
+
+  if (trackHeight <= 240 || width <= 440) {
+    return {
+      chipBorderWidth: 1.25,
+      chipFontSize: 8,
+      chipGap: 5,
+      chipHeight: 12,
+      chipHorizontalPadding: 3.5,
+      chipMaxWidth: 84,
+      chipTextBaselineOffset: 0.25,
+      stackBottomOffset: 40,
+    };
+  }
+
+  return {
+    chipBorderWidth: 1.5,
+    chipFontSize: 9,
+    chipGap: VOCALIZATION_LANE_GAP,
+    chipHeight: VOCALIZATION_CHIP_HEIGHT,
+    chipHorizontalPadding: 4,
+    chipMaxWidth: 106.25,
+    chipTextBaselineOffset: 0.5,
+    stackBottomOffset: LOWER_OVERLAY_STACK_BOTTOM_OFFSET,
+  };
+}
+
 function shouldRenderVocalizationLabels(zoom: ZoomLevel): boolean {
   return zoom === "5m" || zoom === "1m";
 }
@@ -195,6 +255,7 @@ export function buildVocalizationDrawWindows(
 ): VocalizationDrawWindow[] {
   const colorByType = buildVocalizationColorMap(types);
   const showLabels = shouldRenderVocalizationLabels(zoom);
+  const labelLayout = getVocalizationLabelLayout(trackHeight, width);
   const indicatorWidth = getIndicatorWidth(
     range,
     width,
@@ -207,10 +268,10 @@ export function buildVocalizationDrawWindows(
       showLabels ? Math.max(window.labels.length, 1) : 1,
     ),
   );
-  const stackBottom = Math.max(0, trackHeight - LOWER_OVERLAY_STACK_BOTTOM_OFFSET);
+  const stackBottom = Math.max(0, trackHeight - labelLayout.stackBottomOffset);
   const laneBlockHeight =
-    maxLabelsPerWindow * VOCALIZATION_CHIP_HEIGHT +
-    (maxLabelsPerWindow - 1) * VOCALIZATION_LANE_GAP;
+    maxLabelsPerWindow * labelLayout.chipHeight +
+    (maxLabelsPerWindow - 1) * labelLayout.chipGap;
 
   return windows.map((window) => {
     const left = timeToPixel(window.start, range, width);
@@ -256,6 +317,13 @@ export function buildVocalizationDrawWindows(
       : [];
 
     return {
+      chipBorderWidth: labelLayout.chipBorderWidth,
+      chipFontSize: labelLayout.chipFontSize,
+      chipGap: labelLayout.chipGap,
+      chipHeight: labelLayout.chipHeight,
+      chipHorizontalPadding: labelLayout.chipHorizontalPadding,
+      chipMaxWidth: labelLayout.chipMaxWidth,
+      chipTextBaselineOffset: labelLayout.chipTextBaselineOffset,
       hoverRows,
       indicatorFill: VOCALIZATION_INDICATOR_FILL,
       indicatorHeight: trackHeight,
@@ -263,11 +331,11 @@ export function buildVocalizationDrawWindows(
       key: window.key,
       labels,
       width: Math.max(24, right - left),
-      x: Math.max(0, left),
+      x: left,
       y:
         stackBottom -
-        VOCALIZATION_CHIP_HEIGHT -
-        window.lane * (laneBlockHeight + VOCALIZATION_LANE_GAP),
+        labelLayout.chipHeight -
+        window.lane * (laneBlockHeight + labelLayout.chipGap),
     };
   });
 }
@@ -279,7 +347,7 @@ function getVocalizationLabelStackTop(window: VocalizationDrawWindow): number {
 
   return (
     window.y -
-    (window.labels.length - 1) * (VOCALIZATION_CHIP_HEIGHT + VOCALIZATION_LANE_GAP)
+    (window.labels.length - 1) * (window.chipHeight + window.chipGap)
   );
 }
 
@@ -297,7 +365,7 @@ function isPointWithinVocalizationLabelStack(
     x >= window.x - tolerance &&
     x <= window.x + window.width + tolerance &&
     y >= getVocalizationLabelStackTop(window) - tolerance &&
-    y <= window.y + VOCALIZATION_CHIP_HEIGHT + tolerance
+    y <= window.y + window.chipHeight + tolerance
   );
 }
 

@@ -1,5 +1,4 @@
 import {
-  VOCALIZATION_CHIP_HEIGHT,
   type DetectionDrawRect,
   type VocalizationDrawWindow,
 } from "./timeline-overlay-geometry.js";
@@ -62,12 +61,6 @@ const GRID_COLOR = "rgba(119, 201, 188, 0.045)";
 const TILE_PLACEHOLDER = "rgba(20, 34, 54, 0.92)";
 const LOWER_BAND_BACKDROP = "rgba(6, 14, 24, 0.34)";
 const LOWER_BAND_EDGE = "rgba(111, 197, 184, 0.14)";
-const CHIP_HEIGHT = VOCALIZATION_CHIP_HEIGHT;
-const CHIP_HORIZONTAL_PADDING = 4;
-const CHIP_GAP = 6;
-const CHIP_MAX_WIDTH = 106.25;
-const CHIP_BORDER_WIDTH = 1.5;
-const CHIP_TEXT_BASELINE_OFFSET = 0.5;
 
 function truncateTextToWidth(
   context: TimelineCanvasContextLike,
@@ -189,15 +182,16 @@ function drawVocalizations(
   context: TimelineCanvasContextLike,
   vocalizationWindows: VocalizationDrawWindow[],
 ): void {
-  context.font = '600 9px "IBM Plex Sans", sans-serif';
   context.textBaseline = "middle";
 
   vocalizationWindows.forEach((window) => {
+    context.font = `600 ${window.chipFontSize}px "IBM Plex Sans", sans-serif`;
     let cursorY = window.y;
     const maxX = window.x + window.width;
 
     window.labels.forEach((label) => {
-      const maxTextWidth = CHIP_MAX_WIDTH - CHIP_HORIZONTAL_PADDING * 2;
+      const maxTextWidth =
+        window.chipMaxWidth - window.chipHorizontalPadding * 2;
       const visibleText = truncateTextToWidth(
         context,
         label.text,
@@ -205,8 +199,8 @@ function drawVocalizations(
       );
       const textWidth = context.measureText(visibleText).width;
       const chipWidth = Math.min(
-        CHIP_MAX_WIDTH,
-        Math.max(18, textWidth + CHIP_HORIZONTAL_PADDING * 2),
+        window.chipMaxWidth,
+        Math.max(window.chipHeight + 4, textWidth + window.chipHorizontalPadding * 2),
       );
       const availableWidth = maxX - window.x;
       if (availableWidth < 20 || cursorY < 0) {
@@ -215,15 +209,15 @@ function drawVocalizations(
 
       const drawWidth = Math.min(chipWidth, availableWidth);
       context.strokeStyle = label.stroke;
-      context.lineWidth = CHIP_BORDER_WIDTH;
-      context.strokeRect(window.x, cursorY, drawWidth, CHIP_HEIGHT);
+      context.lineWidth = window.chipBorderWidth;
+      context.strokeRect(window.x, cursorY, drawWidth, window.chipHeight);
       context.fillStyle = label.textColor;
       context.fillText(
         visibleText,
-        window.x + CHIP_HORIZONTAL_PADDING,
-        cursorY + CHIP_HEIGHT / 2 + CHIP_TEXT_BASELINE_OFFSET,
+        window.x + window.chipHorizontalPadding,
+        cursorY + window.chipHeight / 2 + window.chipTextBaselineOffset,
       );
-      cursorY -= CHIP_HEIGHT + CHIP_GAP;
+      cursorY -= window.chipHeight + window.chipGap;
     });
   });
 }

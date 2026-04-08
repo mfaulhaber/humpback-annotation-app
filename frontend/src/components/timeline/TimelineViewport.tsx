@@ -62,6 +62,11 @@ interface HoverTooltipSize {
   width: number;
 }
 
+interface TrackSize {
+  height: number;
+  width: number;
+}
+
 interface HoverTooltipPositionInput {
   anchorX: number;
   anchorY: number;
@@ -90,8 +95,6 @@ type TimelineHoverCard =
   };
 
 const DRAG_THRESHOLD_PX = 4;
-const TRACK_HEIGHT_DESKTOP = 448;
-const TRACK_HEIGHT_MOBILE = 331;
 const TOOLTIP_MARGIN_PX = 12;
 const TOOLTIP_OFFSET_X = 12;
 const TOOLTIP_OFFSET_Y = 12;
@@ -103,6 +106,32 @@ const viewportDebug = createDebugLogger("timeline:viewport");
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
+}
+
+function timeToPercent(timestamp: number, range: TimeRange): number {
+  if (range.span <= 0) {
+    return 0;
+  }
+
+  return ((timestamp - range.start) / range.span) * 100;
+}
+
+function measureTrackSize(
+  element: HTMLDivElement | null,
+): TrackSize | null {
+  if (!element) {
+    return null;
+  }
+
+  const rect = element.getBoundingClientRect();
+  const width = Math.floor(rect.width);
+  const height = Math.floor(rect.height);
+
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+
+  return { height, width };
 }
 
 export function formatConfidencePercentage(value: number): string {
@@ -196,12 +225,21 @@ export function TimelineViewport({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragExceededThresholdRef = useRef(false);
   const suppressNextClickRef = useRef(false);
+  const resizeFrameRef = useRef(0);
+  const pendingTrackSizeRef = useRef<TrackSize | null>(null);
+  const trackSizeRef = useRef<TrackSize>({
+    height: 0,
+    width: 0,
+  });
   const displayCenterTimestampRef = useRef(centerTimestamp);
   const detectionRectsRef = useRef<ReturnType<typeof buildDetectionDrawRects>>([]);
   const vocalizationWindowsRef =
     useRef<ReturnType<typeof buildVocalizationDrawWindows>>([]);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const [trackSize, setTrackSize] = useState<TrackSize>({
+    height: 0,
+    width: 0,
+  });
   const [displayCenterTimestamp, setDisplayCenterTimestamp] = useState(centerTimestamp);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [hoveredCard, setHoveredCard] = useState<TimelineHoverCard | null>(null);
@@ -210,18 +248,79 @@ export function TimelineViewport({
   const [tileLoadVersion, setTileLoadVersion] = useState(0);
 
   useEffect(() => {
+    trackSizeRef.current = trackSize;
+  }, [trackSize]);
+
+  useLayoutEffect(() => {
+    const nextSize = measureTrackSize(trackRef.current);
+    if (!nextSize) {
+      return;
+    }
+
+    setTrackSize((current) =>
+      current.width === nextSize.width && current.height === nextSize.height
+        ? current
+        : nextSize,
+    );
+  }, [trackSize.height, trackSize.width]);
+
+  useEffect(() => {
     const element = trackRef.current;
     if (!element) {
       return;
     }
 
+    const scheduleSizeUpdate = (nextWidth: number, nextHeight: number) => {
+      const normalizedWidth = Math.floor(nextWidth);
+      const normalizedHeight = Math.floor(nextHeight);
+
+      if (normalizedWidth <= 0 || normalizedHeight <= 0) {
+        return;
+      }
+
+      pendingTrackSizeRef.current = {
+        height: normalizedHeight,
+        width: normalizedWidth,
+      };
+
+      if (resizeFrameRef.current !== 0) {
+        return;
+      }
+
+      resizeFrameRef.current = window.requestAnimationFrame(() => {
+        resizeFrameRef.current = 0;
+        const nextSize = pendingTrackSizeRef.current;
+        pendingTrackSizeRef.current = null;
+        if (!nextSize) {
+          return;
+        }
+
+        setTrackSize((current) =>
+          current.width === nextSize.width && current.height === nextSize.height
+            ? current
+            : nextSize,
+        );
+      });
+    };
+
     const observer = new ResizeObserver((entries) => {
-      const nextWidth = Math.floor(entries[0]?.contentRect.width ?? 0);
-      setWidth(nextWidth);
+      const nextRect = entries[0]?.contentRect;
+      scheduleSizeUpdate(nextRect?.width ?? 0, nextRect?.height ?? 0);
     });
 
     observer.observe(element);
-    return () => observer.disconnect();
+    const initialSize = measureTrackSize(element);
+    if (initialSize) {
+      scheduleSizeUpdate(initialSize.width, initialSize.height);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (resizeFrameRef.current !== 0) {
+        window.cancelAnimationFrame(resizeFrameRef.current);
+      }
+      pendingTrackSizeRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -253,6 +352,10 @@ export function TimelineViewport({
 
   useEffect(() => () => onInteractionChange?.(false), [onInteractionChange]);
 
+  const fallbackTrackSize = measureTrackSize(trackRef.current);
+  const width = trackSize.width || fallbackTrackSize?.width || 0;
+  const trackHeight = trackSize.height || fallbackTrackSize?.height || 0;
+  const hasMeasuredTrack = width > 0 && trackHeight > 0;
   const range = getViewportRange(manifest, zoom, displayCenterTimestamp);
   const visibleTileIndices = getVisibleTileIndices(manifest, zoom, range, 2);
   const visibleDetections = getVisibleDetections(manifest.detections, range);
@@ -261,8 +364,7 @@ export function TimelineViewport({
     manifest.vocalization_labels,
     range,
   );
-  const trackHeight = width < 700 ? TRACK_HEIGHT_MOBILE : TRACK_HEIGHT_DESKTOP;
-  const detectionRects = showDetections
+  const detectionRects = showDetections && hasMeasuredTrack
     ? buildDetectionDrawRects(
         detectionLanes,
         range,
@@ -273,7 +375,7 @@ export function TimelineViewport({
       )
     : [];
   const vocalizationLanes = buildVocalizationLanes(visibleVocalizationWindows);
-  const vocalizationDrawWindows = showVocalizations
+  const vocalizationDrawWindows = showVocalizations && hasMeasuredTrack
     ? buildVocalizationDrawWindows(
         vocalizationLanes,
         range,
@@ -367,7 +469,7 @@ export function TimelineViewport({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || width <= 0) {
+    if (!canvas || width <= 0 || trackHeight <= 0) {
       return;
     }
 
@@ -379,8 +481,6 @@ export function TimelineViewport({
     const pixelRatio = window.devicePixelRatio || 1;
     canvas.width = Math.floor(width * pixelRatio);
     canvas.height = Math.floor(trackHeight * pixelRatio);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${trackHeight}px`;
 
     drawTimelineCanvas(context, {
       detectionRects,
@@ -569,7 +669,6 @@ export function TimelineViewport({
         <div
           ref={trackRef}
           className={`timeline-track ${dragState ? "timeline-track--dragging" : ""}`}
-          style={{ height: `${trackHeight}px`, minHeight: `${trackHeight}px` }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -628,7 +727,7 @@ export function TimelineViewport({
           />
         )}
 
-        <TimeAxis range={range} ticks={timeTicks} width={width} zoom={zoom} />
+        <TimeAxis range={range} ticks={timeTicks} zoom={zoom} />
       </div>
     </section>
   );
@@ -637,18 +736,17 @@ export function TimelineViewport({
 interface TimeAxisProps {
   range: TimeRange;
   ticks: number[];
-  width: number;
   zoom: ZoomLevel;
 }
 
-function TimeAxis({ range, ticks, width, zoom }: TimeAxisProps) {
+function TimeAxis({ range, ticks, zoom }: TimeAxisProps) {
   return (
     <div className="timeline-axis">
       {ticks.map((tick) => (
         <span
           key={tick}
           className="timeline-axis__tick"
-          style={{ left: `${timeToPixel(tick, range, width)}px` }}
+          style={{ left: `${timeToPercent(tick, range)}%` }}
         >
           {formatAxisTimestamp(tick, zoom)}
         </span>

@@ -160,6 +160,68 @@ describe("timeline-overlay-geometry", () => {
     );
   });
 
+  it("keeps the true x-position when a vocalization window scrolls off the left edge", () => {
+    const drawWindows = buildVocalizationDrawWindows(
+      [
+        {
+          key: "left-edge-window",
+          start: 5,
+          end: 15,
+          labels: [
+            {
+              start_utc: 5,
+              end_utc: 15,
+              type: "Ascending Moan",
+              confidence: 0.9,
+              source: "manual",
+            },
+          ],
+          lane: 0,
+        },
+      ],
+      { start: 10, end: 110, span: 100 },
+      500,
+      [{ id: 1, name: "Ascending Moan" }],
+      320,
+      "1m",
+      5,
+    );
+
+    expect(drawWindows[0]?.x).toBe(-25);
+    expect(drawWindows[0]?.width).toBe(50);
+  });
+
+  it("shrinks vocalization label chip geometry on compact tracks", () => {
+    const drawWindows = buildVocalizationDrawWindows(
+      [
+        {
+          key: "compact-window",
+          start: 10,
+          end: 20,
+          labels: [
+            {
+              start_utc: 10,
+              end_utc: 20,
+              type: "Ascending Moan",
+              confidence: 0.9,
+              source: "manual",
+            },
+          ],
+          lane: 0,
+        },
+      ],
+      { start: 0, end: 100, span: 100 },
+      360,
+      [{ id: 1, name: "Ascending Moan" }],
+      170,
+      "1m",
+      5,
+    );
+
+    expect(drawWindows[0]?.chipHeight).toBeLessThan(VOCALIZATION_CHIP_HEIGHT);
+    expect(drawWindows[0]?.chipGap).toBeLessThan(VOCALIZATION_LANE_GAP);
+  });
+
   it("only shows vocalization labels at 5m and 1m, with 5m abbreviated to first letter ellipsis", () => {
     const windows: VocalizationLaneWindow[] = [
       {

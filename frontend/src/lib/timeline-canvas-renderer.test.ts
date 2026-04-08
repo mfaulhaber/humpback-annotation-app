@@ -206,6 +206,13 @@ describe("timeline-canvas-renderer", () => {
       tileItems: [],
       vocalizationWindows: [
         {
+          chipBorderWidth: 1.5,
+          chipFontSize: 9,
+          chipGap: 6,
+          chipHeight: 14,
+          chipHorizontalPadding: 4,
+          chipMaxWidth: 106.25,
+          chipTextBaselineOffset: 0.5,
           hoverRows: [],
           indicatorFill: "rgba(168, 130, 220, 0.4)",
           indicatorHeight: 336,
