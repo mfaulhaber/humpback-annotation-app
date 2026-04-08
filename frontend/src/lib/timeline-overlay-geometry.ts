@@ -31,8 +31,19 @@ export interface VocalizationDrawLabel {
   textColor: string;
 }
 
+export interface VocalizationHoverRow {
+  confidence: number;
+  key: string;
+  source: VocalizationLabel["source"];
+  stroke: string;
+  text: string;
+  textColor: string;
+}
+
 export interface VocalizationDrawWindow {
+  hoverRows: VocalizationHoverRow[];
   indicatorFill: string;
+  indicatorHeight: number;
   indicatorWidth: number;
   key: string;
   labels: VocalizationDrawLabel[];
@@ -204,30 +215,50 @@ export function buildVocalizationDrawWindows(
   return windows.map((window) => {
     const left = timeToPixel(window.start, range, width);
     const right = timeToPixel(window.end, range, width);
+    const hoverRows = window.labels
+      .map((label, index) => {
+        const trimmedType = label.type.trim();
+        if (!trimmedType) {
+          return null;
+        }
+
+        const accent =
+          colorByType.get(trimmedType) ?? fallbackVocalizationColor(trimmedType);
+
+        return {
+          confidence: label.confidence,
+          key: `${window.key}:${trimmedType}:${label.source}:${index}`,
+          source: label.source,
+          stroke: accent,
+          text: trimmedType,
+          textColor: accent,
+        };
+      })
+      .filter((row): row is VocalizationHoverRow => row != null);
     const labels = showLabels
-      ? window.labels
-          .map((label) => {
-            const accent =
-              colorByType.get(label.type) ?? fallbackVocalizationColor(label.type);
-            const text = formatVocalizationLabelText(label.type, zoom);
+      ? hoverRows
+          .map((row) => {
+            const text = formatVocalizationLabelText(row.text, zoom);
             if (!text) {
               return null;
             }
 
             return {
               fill: "transparent",
-              key: `${window.key}:${label.type}:${label.source}`,
-              source: label.source,
-              stroke: accent,
+              key: row.key,
+              source: row.source,
+              stroke: row.stroke,
               text,
-              textColor: accent,
+              textColor: row.textColor,
             };
           })
           .filter((label): label is VocalizationDrawLabel => label != null)
       : [];
 
     return {
+      hoverRows,
       indicatorFill: VOCALIZATION_INDICATOR_FILL,
+      indicatorHeight: trackHeight,
       indicatorWidth,
       key: window.key,
       labels,
@@ -239,4 +270,70 @@ export function buildVocalizationDrawWindows(
         window.lane * (laneBlockHeight + VOCALIZATION_LANE_GAP),
     };
   });
+}
+
+function getVocalizationLabelStackTop(window: VocalizationDrawWindow): number {
+  if (window.labels.length <= 1) {
+    return window.y;
+  }
+
+  return (
+    window.y -
+    (window.labels.length - 1) * (VOCALIZATION_CHIP_HEIGHT + VOCALIZATION_LANE_GAP)
+  );
+}
+
+function isPointWithinVocalizationLabelStack(
+  window: VocalizationDrawWindow,
+  x: number,
+  y: number,
+  tolerance: number,
+): boolean {
+  if (window.labels.length === 0) {
+    return false;
+  }
+
+  return (
+    x >= window.x - tolerance &&
+    x <= window.x + window.width + tolerance &&
+    y >= getVocalizationLabelStackTop(window) - tolerance &&
+    y <= window.y + VOCALIZATION_CHIP_HEIGHT + tolerance
+  );
+}
+
+function isPointWithinVocalizationIndicator(
+  window: VocalizationDrawWindow,
+  x: number,
+  y: number,
+  tolerance: number,
+): boolean {
+  return (
+    x >= window.x - tolerance &&
+    x <= window.x + window.indicatorWidth + tolerance &&
+    y >= -tolerance &&
+    y <= window.indicatorHeight + tolerance
+  );
+}
+
+export function findVocalizationWindowAtPoint(
+  windows: VocalizationDrawWindow[],
+  x: number,
+  y: number,
+  tolerance = 4,
+): VocalizationDrawWindow | null {
+  for (let index = windows.length - 1; index >= 0; index -= 1) {
+    const window = windows[index]!;
+    if (isPointWithinVocalizationLabelStack(window, x, y, tolerance)) {
+      return window;
+    }
+  }
+
+  for (let index = windows.length - 1; index >= 0; index -= 1) {
+    const window = windows[index]!;
+    if (isPointWithinVocalizationIndicator(window, x, y, tolerance)) {
+      return window;
+    }
+  }
+
+  return null;
 }

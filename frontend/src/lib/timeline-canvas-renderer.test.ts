@@ -206,7 +206,9 @@ describe("timeline-canvas-renderer", () => {
       tileItems: [],
       vocalizationWindows: [
         {
+          hoverRows: [],
           indicatorFill: "rgba(168, 130, 220, 0.4)",
+          indicatorHeight: 336,
           indicatorWidth: 16,
           key: "window",
           labels: [],

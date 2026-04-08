@@ -7,9 +7,11 @@ import {
   VOCALIZATION_LABEL_PALETTE,
   VOCALIZATION_INDICATOR_FILL,
   VOCALIZATION_CHIP_HEIGHT,
+  VOCALIZATION_LANE_GAP,
   buildDetectionDrawRects,
   buildVocalizationDrawWindows,
   findDetectionRectAtPoint,
+  findVocalizationWindowAtPoint,
 } from "./timeline-overlay-geometry.js";
 import { type VocalizationLaneWindow } from "./timeline-math.js";
 
@@ -146,7 +148,13 @@ describe("timeline-overlay-geometry", () => {
       320 - LOWER_OVERLAY_STACK_BOTTOM_OFFSET - VOCALIZATION_CHIP_HEIGHT,
     );
     expect(drawWindows[0]?.indicatorWidth).toBe(25);
+    expect(drawWindows[0]?.indicatorHeight).toBe(320);
     expect(drawWindows[0]?.indicatorFill).toBe(VOCALIZATION_INDICATOR_FILL);
+    expect(drawWindows[0]?.hoverRows[0]).toMatchObject({
+      confidence: 0.9,
+      text: "Ascending Moan",
+      textColor: VOCALIZATION_LABEL_PALETTE[0],
+    });
     expect(drawWindows[0]?.labels[0]?.textColor).toBe(
       VOCALIZATION_LABEL_PALETTE[0],
     );
@@ -243,6 +251,93 @@ describe("timeline-overlay-geometry", () => {
 
     expect(drawWindows[0]?.labels[0]?.textColor).not.toBe(
       drawWindows[0]?.labels[1]?.textColor,
+    );
+  });
+
+  it("hit-tests vocalization label stacks before falling back to indicator bars", () => {
+    const drawWindows = buildVocalizationDrawWindows(
+      [
+        {
+          key: "hover-window",
+          start: 10,
+          end: 20,
+          labels: [
+            {
+              start_utc: 10,
+              end_utc: 20,
+              type: "Ascending Moan",
+              confidence: 0.9,
+              source: "manual",
+            },
+            {
+              start_utc: 10,
+              end_utc: 20,
+              type: "Descending Cry",
+              confidence: 0.6,
+              source: "inference",
+            },
+          ],
+          lane: 0,
+        },
+      ],
+      { start: 0, end: 100, span: 100 },
+      500,
+      [
+        { id: 1, name: "Ascending Moan" },
+        { id: 2, name: "Descending Cry" },
+      ],
+      320,
+      "1m",
+      5,
+    );
+
+    const hovered = drawWindows[0]!;
+    const chipStackTop =
+      hovered.y -
+      (hovered.labels.length - 1) *
+        (VOCALIZATION_CHIP_HEIGHT + VOCALIZATION_LANE_GAP);
+
+    expect(
+      findVocalizationWindowAtPoint(drawWindows, hovered.x + 10, chipStackTop + 4),
+    ).toBe(hovered);
+    expect(findVocalizationWindowAtPoint(drawWindows, hovered.x + 2, 40)).toBe(
+      hovered,
+    );
+    expect(findVocalizationWindowAtPoint(drawWindows, hovered.x + 40, 40)).toBeNull();
+  });
+
+  it("uses the indicator bar as the hover target when vocalization labels are hidden", () => {
+    const drawWindows = buildVocalizationDrawWindows(
+      [
+        {
+          key: "coarse-hover",
+          start: 10,
+          end: 20,
+          labels: [
+            {
+              start_utc: 10,
+              end_utc: 20,
+              type: "Ascending Moan",
+              confidence: 0.9,
+              source: "manual",
+            },
+          ],
+          lane: 0,
+        },
+      ],
+      { start: 0, end: 100, span: 100 },
+      500,
+      [{ id: 1, name: "Ascending Moan" }],
+      320,
+      "15m",
+      5,
+    );
+
+    const hovered = drawWindows[0]!;
+
+    expect(hovered.labels).toEqual([]);
+    expect(findVocalizationWindowAtPoint(drawWindows, hovered.x + 2, 12)).toBe(
+      hovered,
     );
   });
 });
