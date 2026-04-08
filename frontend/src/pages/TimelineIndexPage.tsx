@@ -69,7 +69,7 @@ export function TimelineIndexPage() {
         ) : null}
 
         {!loading && !error && timelines.length > 0 ? (
-          <section className="timeline-card-grid">
+          <section className="timeline-card-grid" data-testid="timeline-index-grid">
             {timelines.map((timeline) => {
               const hints = timeline.hints?.trim();
 

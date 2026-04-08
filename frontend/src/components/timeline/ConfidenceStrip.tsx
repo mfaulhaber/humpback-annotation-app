@@ -94,5 +94,11 @@ export function ConfidenceStrip({
     }
   }, [confidence, range, startTimestamp, width]);
 
-  return <canvas ref={canvasRef} className="timeline-confidence-strip" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="timeline-confidence-strip"
+      data-testid="timeline-confidence-strip"
+    />
+  );
 }

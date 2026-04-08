@@ -139,8 +139,8 @@ Run after all tasks:
 2. `pnpm build`
 3. `pnpm test`
 4. `pnpm test:ui`
-5. `pnpm test:ui:visual` on the pinned visual environment, or state exactly
-   what was not run
+5. `pnpm test:ui:visual` on the committed baseline environment, or state
+   exactly what was not run
 6. `TIMELINE_EXPORT_ROOT=/Volumes/External_2TB/data/exports pnpm test:ui:smoke`
    when the external export root is available; otherwise state exactly what was
    not run

@@ -503,7 +503,12 @@ When CI is added later, the recommended first CI posture is:
 2. run `pnpm build`
 3. run `pnpm test`
 4. run `pnpm test:ui`
-5. run `pnpm test:ui:visual` on a pinned Linux Chromium environment only
+5. run `pnpm test:ui:visual` on the same pinned Chromium environment used for
+   the committed baselines
+
+At the time of this design, the committed screenshot baselines target macOS
+Chromium. If a future CI lane wants to run on Linux instead, generate and
+commit a deliberate Linux baseline set first.
 
 Screenshot baselines should be updated deliberately, not automatically on every
 PR run.
@@ -578,8 +583,8 @@ When this design is implemented, the expected verification set should be:
 2. `pnpm build`
 3. `pnpm test`
 4. `pnpm test:ui`
-5. `pnpm test:ui:visual` when the pinned visual environment is available, or a
-   precise note about what was not run
+5. `pnpm test:ui:visual` when the committed baseline environment is available,
+   or a precise note about what was not run
 
 ## 11. External References
 

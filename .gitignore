@@ -4,6 +4,7 @@ node_modules
 pnpm-debug.log*
 dist
 coverage
+frontend/test-results/
 *.tsbuildinfo
 cdk.out
 .aws-sam

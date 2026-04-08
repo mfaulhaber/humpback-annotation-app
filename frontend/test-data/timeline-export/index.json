@@ -1,0 +1,12 @@
+{
+  "timelines": [
+    {
+      "job_id": "8224c4a6-bc36-43db-ad59-e8933ef09115",
+      "hydrophone_name": "Orcasound Lab",
+      "hints": "Scroll the timeline view to the time 02:05 and then zoom into the 15m, 5m, and 1m zoom levels. Select \"Vocalizations\" to see trained model predicted humpback call types. Select \"Detections\" to see model predicted whale/not-whale time windows. Click the play button to listen to the hydrophone recording.",
+      "species": "ar-v2-promoted",
+      "start_timestamp": 1635465600,
+      "end_timestamp": 1635552000
+    }
+  ]
+}

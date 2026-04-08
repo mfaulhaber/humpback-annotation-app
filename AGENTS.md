@@ -92,7 +92,15 @@ workflow file in `docs/workflows/` with the detailed steps.
   sample
 - Verification baseline: `pnpm typecheck` and `pnpm build`
 - Run `pnpm test` when the touched active frontend behavior is covered
+- Run `pnpm test:ui` when the touched active frontend behavior depends on real
+  browser layout, resize behavior, or route-level viewer execution covered by
+  the Playwright suite
+- Run `pnpm test:ui:visual` when screenshot-covered viewer visuals change,
+  need visual regression confirmation, and the committed baseline environment
+  is available
 - Run `pnpm test:legacy` when the touched dormant API or data behavior is
   covered and required local services are available; if not, say exactly what
   was not run
+- Run `pnpm test:ui:smoke` only when a real external export-root smoke check is
+  relevant and available
 - Keep `.claude/commands/` and `docs/workflows/` aligned
