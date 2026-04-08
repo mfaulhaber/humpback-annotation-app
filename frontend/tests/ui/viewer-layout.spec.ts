@@ -52,3 +52,74 @@ test("viewer layout keeps the header, stage, and controls inside the viewer shel
   expect(geometry.track.width).toBeGreaterThan(0);
   expect(geometry.canvas.width).toBeGreaterThan(0);
 });
+
+test("viewer exits drag mode when the pointer returns with the mouse button released", async ({
+  page,
+}) => {
+  await openCommittedFixtureViewer(page, {
+    zoom: "1h",
+  });
+
+  const track = page.getByTestId("timeline-track");
+  const timecode = page.getByTestId("timeline-timecode");
+  const box = await track.boundingBox();
+
+  expect(box).not.toBeNull();
+
+  const startX = (box?.x ?? 0) + (box?.width ?? 0) * 0.7;
+  const dragX = (box?.x ?? 0) + (box?.width ?? 0) * 0.35;
+  const releaseX = (box?.x ?? 0) + (box?.width ?? 0) * 0.2;
+  const laterX = (box?.x ?? 0) + (box?.width ?? 0) * 0.85;
+  const y = (box?.y ?? 0) + (box?.height ?? 0) * 0.5;
+  const initialTimecode = await timecode.innerText();
+
+  await page.mouse.move(startX, y);
+  await page.mouse.down();
+  await page.mouse.move(dragX, y);
+
+  await expect(track).toHaveClass(/timeline-track--dragging/);
+  await expect(timecode).not.toHaveText(initialTimecode);
+
+  const draggedTimecode = await timecode.innerText();
+
+  await track.evaluate(
+    (element, payload) => {
+      element.dispatchEvent(new PointerEvent("pointermove", payload));
+    },
+    {
+      bubbles: true,
+      button: -1,
+      buttons: 0,
+      cancelable: true,
+      clientX: releaseX,
+      clientY: y,
+      composed: true,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: "mouse",
+    },
+  );
+
+  await expect(track).not.toHaveClass(/timeline-track--dragging/);
+
+  await track.evaluate(
+    (element, payload) => {
+      element.dispatchEvent(new PointerEvent("pointermove", payload));
+    },
+    {
+      bubbles: true,
+      button: -1,
+      buttons: 0,
+      cancelable: true,
+      clientX: laterX,
+      clientY: y,
+      composed: true,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: "mouse",
+    },
+  );
+
+  await expect(timecode).toHaveText(draggedTimecode);
+  await page.mouse.up();
+});
