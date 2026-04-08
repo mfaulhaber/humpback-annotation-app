@@ -312,6 +312,26 @@ export function availableZoomLevels(manifest: TimelineManifest): ZoomLevel[] {
   return ZOOM_LEVELS.filter((zoom) => supportsZoom(manifest, zoom));
 }
 
+export function preferredInitialZoom(
+  manifest: TimelineManifest,
+  targetZoom: ZoomLevel = "1h",
+): ZoomLevel {
+  const available = availableZoomLevels(manifest);
+
+  if (available.length === 0) {
+    return targetZoom;
+  }
+
+  return available.reduce((best, current) => {
+    const bestDistance = Math.abs(VIEWPORT_SPANS[best] - VIEWPORT_SPANS[targetZoom]);
+    const currentDistance = Math.abs(
+      VIEWPORT_SPANS[current] - VIEWPORT_SPANS[targetZoom],
+    );
+
+    return currentDistance < bestDistance ? current : best;
+  });
+}
+
 export function supportedManifestVersion(value: unknown): value is 1 {
   return value === 1;
 }

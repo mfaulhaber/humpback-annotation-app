@@ -8,6 +8,7 @@ import {
   defaultZoomForDuration,
   isTimelineIndex,
   isTimelineManifest,
+  preferredInitialZoom,
   tilePath,
   tileTimeRange,
 } from "./timeline-contract.js";
@@ -69,5 +70,15 @@ describe("timeline-contract", () => {
     expect(availableZoomLevels(sampleTimelineManifest)).toEqual(
       sampleTimelineManifest.tiles.zoom_levels,
     );
+    expect(preferredInitialZoom(sampleTimelineManifest)).toBe("1h");
+    expect(
+      preferredInitialZoom({
+        ...sampleTimelineManifest,
+        tiles: {
+          ...sampleTimelineManifest.tiles,
+          zoom_levels: ["24h", "6h", "15m", "5m", "1m"],
+        },
+      }),
+    ).toBe("15m");
   });
 });

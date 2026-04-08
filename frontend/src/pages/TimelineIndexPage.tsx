@@ -4,11 +4,15 @@ import { fetchTimelineIndex } from "../api/timeline.js";
 import { TimelineLayout } from "../components/timeline/TimelineLayout.js";
 import type { TimelineEntry } from "../lib/timeline-contract.js";
 import {
-  deriveTimelineTitle,
-  formatDurationShort,
-  formatSpeciesLabel,
-  formatTimelineCardDate,
+  formatTimelineCardRange,
 } from "../lib/timeline-math.js";
+
+const TIMELINE_DESCRIPTION_PARAGRAPHS = [
+  "The audio behind these timelines comes from long-running underwater recordings collected by hydrophones, including sources such as Orcasound listening stations and NOAA archive material. Those recordings are processed upstream into reviewable timeline exports so the browser can focus on exploration instead of heavy audio analysis work.",
+  "In that upstream pipeline, short slices of audio are turned into acoustic embeddings using Perch or SurfPerch. Those embeddings act as compact summaries of the sound and are used to train a first-pass binary classifier that separates likely whale audio from background noise or other non-whale sounds.",
+  "After that whale versus not-whale step, additional classifiers are trained for individual humpback vocalization types. That makes it possible to surface likely detections and likely call labels together, so a reviewer can move through a long recording with much more context than raw audio alone would provide.",
+  "The timeline viewer brings those prepared results together in one readonly workspace. You can open a job, zoom between broad and fine time scales, play and pause audio, skip backward or forward, change playback speed, watch the UTC time readout track the playhead, and toggle detections or vocalizations on the timeline while exploring the spectrogram.",
+] as const;
 
 export function TimelineIndexPage() {
   const [timelines, setTimelines] = useState<TimelineEntry[]>([]);
@@ -37,13 +41,7 @@ export function TimelineIndexPage() {
     <TimelineLayout chrome="index">
       <div className="timeline-index">
         <header className="timeline-index__hero">
-          <div className="timeline-kicker">Timeline Viewer MVP</div>
-          <h1>Browse exported acoustic timelines without the annotation workflow in front.</h1>
-          <p>
-            The active app surface now opens same-origin exported jobs from
-            static `/data/*` artifacts, locally and through CloudFront-backed
-            S3.
-          </p>
+          <div className="timeline-kicker">Humpback Timeline Viewer</div>
         </header>
 
         {loading ? (
@@ -73,34 +71,38 @@ export function TimelineIndexPage() {
         {!loading && !error && timelines.length > 0 ? (
           <section className="timeline-card-grid">
             {timelines.map((timeline) => {
-              const duration = timeline.end_timestamp - timeline.start_timestamp;
-
               return (
                 <Link
                   key={timeline.job_id}
                   to={`/${timeline.job_id}`}
                   className="timeline-card"
                 >
-                  <div className="timeline-card__meta">
-                    <span className="timeline-card__species">
-                      {formatSpeciesLabel(timeline.species)}
+                  <div className="timeline-card__summary">
+                    <span className="timeline-card__summary-item">
+                      <span className="timeline-card__summary-label">Hydrophone:</span>
+                      {timeline.hydrophone_name}
                     </span>
-                    <span className="timeline-card__duration">
-                      {formatDurationShort(duration)}
+                    <span className="timeline-card__summary-item">
+                      <span className="timeline-card__summary-label">Date Range:</span>
+                      {formatTimelineCardRange(
+                        timeline.start_timestamp,
+                        timeline.end_timestamp,
+                      )}
                     </span>
                   </div>
-                  <h2>{deriveTimelineTitle(timeline)}</h2>
-                  <p className="timeline-card__date-range">
-                    {formatTimelineCardDate(timeline.start_timestamp)}
-                    {" -> "}
-                    {formatTimelineCardDate(timeline.end_timestamp)}
-                  </p>
                   <span className="timeline-card__cta">Open timeline</span>
                 </Link>
               );
             })}
           </section>
         ) : null}
+
+        <footer className="timeline-index__footer" aria-label="Description">
+          <h2>Description</h2>
+          {TIMELINE_DESCRIPTION_PARAGRAPHS.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </footer>
       </div>
     </TimelineLayout>
   );

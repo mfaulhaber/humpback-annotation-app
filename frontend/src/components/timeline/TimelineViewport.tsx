@@ -49,6 +49,8 @@ interface DragState {
 }
 
 const DRAG_THRESHOLD_PX = 4;
+const TRACK_HEIGHT_DESKTOP = 448;
+const TRACK_HEIGHT_MOBILE = 331;
 const viewportDebug = createDebugLogger("timeline:viewport");
 
 export function TimelineViewport({
@@ -128,7 +130,7 @@ export function TimelineViewport({
     manifest.vocalization_labels,
     range,
   );
-  const trackHeight = width < 700 ? 248 : 336;
+  const trackHeight = width < 700 ? TRACK_HEIGHT_MOBILE : TRACK_HEIGHT_DESKTOP;
   const detectionRects = showDetections
     ? buildDetectionDrawRects(
         detectionLanes,
