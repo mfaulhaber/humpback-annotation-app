@@ -1,10 +1,21 @@
 import type { TimelineEntry, TimelineManifest } from "./timeline-contract.js";
 
 const sampleJobId = "550e8400-e29b-41d4-a716-446655440000";
+export const sampleTimelineHintText =
+  'Scroll the timeline view to the time 02:05 and then zoom into the 15m, 5m, and 1m zoom levels. Select "Vocalizations" to see trained model predicted humpback call types. Select "Detections" to see model predicted whale/not-whale time windows. Click the play button to listen to the hydrophone recording.';
 
 export const sampleTimelineEntry: TimelineEntry = {
   job_id: sampleJobId,
   hydrophone_name: "Orcasound Lab",
+  species: "ar-v2-promoted",
+  start_timestamp: 1_711_929_600,
+  end_timestamp: 1_711_936_800,
+};
+
+export const sampleTimelineEntryWithHints: TimelineEntry = {
+  job_id: "8224c4a6-bc36-43db-ad59-e8933ef09115",
+  hydrophone_name: "Orcasound Lab",
+  hints: sampleTimelineHintText,
   species: "ar-v2-promoted",
   start_timestamp: 1_711_929_600,
   end_timestamp: 1_711_936_800,

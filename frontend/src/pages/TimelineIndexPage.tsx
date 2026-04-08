@@ -9,7 +9,7 @@ import {
 
 const TIMELINE_DESCRIPTION_PARAGRAPHS = [
   "The audio behind these timelines comes from long-running underwater recordings collected by hydrophones, including sources such as Orcasound listening stations and NOAA archive material. Those recordings are processed upstream into reviewable timeline exports so the browser can focus on exploration instead of heavy audio analysis work.",
-  "In that upstream pipeline, short slices of audio are turned into acoustic embeddings using Perch or SurfPerch. Those embeddings act as compact summaries of the sound and are used to train a first-pass binary classifier that separates likely whale audio from background noise or other non-whale sounds.",
+  "In that upstream pipeline, short slices of audio are turned into acoustic embeddings using Google Perch or SurfPerch. Those embeddings act as compact summaries of the sound and are used to train a first-pass binary classifier that separates likely whale audio from background noise or other non-whale sounds.",
   "After that whale versus not-whale step, additional classifiers are trained for individual humpback vocalization types. That makes it possible to surface likely detections and likely call labels together, so a reviewer can move through a long recording with much more context than raw audio alone would provide.",
   "The timeline viewer brings those prepared results together in one readonly workspace. You can open a job, zoom between broad and fine time scales, play and pause audio, skip backward or forward, change playback speed, watch the UTC time readout track the playhead, and toggle detections or vocalizations on the timeline while exploring the spectrogram.",
 ] as const;
@@ -71,6 +71,8 @@ export function TimelineIndexPage() {
         {!loading && !error && timelines.length > 0 ? (
           <section className="timeline-card-grid">
             {timelines.map((timeline) => {
+              const hints = timeline.hints?.trim();
+
               return (
                 <Link
                   key={timeline.job_id}
@@ -90,6 +92,12 @@ export function TimelineIndexPage() {
                       )}
                     </span>
                   </div>
+                  {hints ? (
+                    <div className="timeline-card__hints">
+                      <span className="timeline-card__hints-label">Hints</span>
+                      <p className="timeline-card__hints-copy">{hints}</p>
+                    </div>
+                  ) : null}
                   <span className="timeline-card__cta">Open timeline</span>
                 </Link>
               );

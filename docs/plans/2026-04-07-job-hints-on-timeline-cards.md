@@ -15,10 +15,10 @@ cards without breaking existing export readers.
 - Modify: `frontend/src/lib/timeline-test-fixtures.ts`
 
 **Acceptance criteria:**
-- [ ] Timeline index entries may include a `hints` string field
-- [ ] Frontend contract validation accepts entries with valid `hints` text and
+- [x] Timeline index entries may include a `hints` string field
+- [x] Frontend contract validation accepts entries with valid `hints` text and
       rejects invalid non-string values
-- [ ] Existing manifest validation behavior remains unchanged
+- [x] Existing manifest validation behavior remains unchanged
 
 **Verification:**
 - `pnpm typecheck`
@@ -35,9 +35,9 @@ cards without breaking existing export readers.
 - Modify: `README.md`
 
 **Acceptance criteria:**
-- [ ] Timeline cards show hint text when a job entry includes it
-- [ ] Cards without hint text remain visually valid and readable
-- [ ] Repo docs describe the `index.json` hint field truthfully
+- [x] Timeline cards show hint text when a job entry includes it
+- [x] Cards without hint text remain visually valid and readable
+- [x] Repo docs describe the `index.json` hint field truthfully
 
 **Verification:**
 - `pnpm typecheck`

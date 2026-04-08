@@ -107,9 +107,24 @@ The active frontend expects:
 - `data/{jobId}/tiles/{zoom}/tile_0000.png` for spectrogram tiles
 - `data/{jobId}/audio/chunk_0000.mp3` for audio chunks
 - `job_id` / `job.id` values in the export contract to be UUID strings
+- each `data/index.json` timeline entry may include an optional `hints` string
+  that the landing page renders on that job's card
 
 Everything is fetched same-origin. The viewer does not proxy tiles, audio, or
 manifests through application compute.
+
+Example `data/index.json` entry with per-job hints:
+
+```json
+{
+  "job_id": "8224c4a6-bc36-43db-ad59-e8933ef09115",
+  "hydrophone_name": "Orcasound Lab",
+  "species": "ar-v2-promoted",
+  "start_timestamp": 1711929600,
+  "end_timestamp": 1711936800,
+  "hints": "Scroll the timeline view to the time 02:05 and then zoom into the 15m, 5m, and 1m zoom levels. Select \"Vocalizations\" to see trained model predicted humpback call types. Select \"Detections\" to see model predicted whale/not-whale time windows. Click the play button to listen to the hydrophone recording."
+}
+```
 
 ## AWS Deployment
 

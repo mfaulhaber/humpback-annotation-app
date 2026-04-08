@@ -14,6 +14,7 @@ import {
 } from "./timeline-contract.js";
 import {
   sampleTimelineEntry,
+  sampleTimelineEntryWithHints,
   sampleTimelineManifest,
 } from "./timeline-test-fixtures.js";
 
@@ -24,9 +25,15 @@ describe("timeline-contract", () => {
 
   it("validates timeline indexes built from export entries", () => {
     expect(isTimelineIndex({ timelines: [sampleTimelineEntry] })).toBe(true);
+    expect(isTimelineIndex({ timelines: [sampleTimelineEntryWithHints] })).toBe(true);
     expect(isTimelineIndex({ timelines: [{ ...sampleTimelineEntry, job_id: 42 }] })).toBe(
       false,
     );
+    expect(
+      isTimelineIndex({
+        timelines: [{ ...sampleTimelineEntryWithHints, hints: 42 }],
+      }),
+    ).toBe(false);
     expect(
       isTimelineIndex({
         timelines: [{ ...sampleTimelineEntry, job_id: "demo.v1" }],

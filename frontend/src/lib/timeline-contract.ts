@@ -9,6 +9,7 @@ export interface TimelineIndex {
 export interface TimelineEntry {
   job_id: string;
   hydrophone_name: string;
+  hints?: string;
   species: string;
   start_timestamp: number;
   end_timestamp: number;
@@ -124,6 +125,7 @@ function isTimelineEntry(value: unknown): value is TimelineEntry {
   return (
     isUuid(value["job_id"]) &&
     isString(value["hydrophone_name"]) &&
+    (value["hints"] === undefined || isString(value["hints"])) &&
     isString(value["species"]) &&
     isNumber(value["start_timestamp"]) &&
     isNumber(value["end_timestamp"])
