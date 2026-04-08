@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   tilePath,
   tileTimeRange,
+  type Detection,
   type TimelineManifest,
   type ZoomLevel,
 } from "../../lib/timeline-contract.js";
@@ -23,6 +24,9 @@ import { createDebugLogger } from "../../lib/debug-log.js";
 import {
   buildDetectionDrawRects,
   buildVocalizationDrawWindows,
+  findVocalizationWindowAtPoint,
+  type DetectionDrawRect,
+  type VocalizationDrawWindow,
   findDetectionRectAtPoint,
 } from "../../lib/timeline-overlay-geometry.js";
 import { timelineTileCache } from "../../lib/tile-cache.js";
@@ -30,7 +34,7 @@ import { ConfidenceStrip } from "./ConfidenceStrip.js";
 
 interface TimelineViewportProps {
   centerTimestamp: number;
-  enableDetectionHover?: boolean;
+  enableOverlayHover?: boolean;
   isPlaying: boolean;
   manifest: TimelineManifest;
   onInteractionChange?: (isInteracting: boolean) => void;
@@ -48,14 +52,136 @@ interface DragState {
   startCenterTimestamp: number;
 }
 
+interface HoverAnchor {
+  x: number;
+  y: number;
+}
+
+interface HoverTooltipSize {
+  height: number;
+  width: number;
+}
+
+interface HoverTooltipPositionInput {
+  anchorX: number;
+  anchorY: number;
+  margin?: number;
+  offsetX?: number;
+  offsetY?: number;
+  tooltipHeight: number;
+  tooltipWidth: number;
+  trackHeight: number;
+  trackWidth: number;
+}
+
+interface TimelineHoverRow {
+  key: string;
+  source?: "manual" | "inference";
+  text: string;
+  textColor?: string;
+  variant: "plain" | "vocalization";
+}
+
+type TimelineHoverCard =
+  {
+    anchor: HoverAnchor;
+    key: string;
+    rows: TimelineHoverRow[];
+  };
+
 const DRAG_THRESHOLD_PX = 4;
 const TRACK_HEIGHT_DESKTOP = 448;
 const TRACK_HEIGHT_MOBILE = 331;
+const TOOLTIP_MARGIN_PX = 12;
+const TOOLTIP_OFFSET_X = 12;
+const TOOLTIP_OFFSET_Y = 12;
+const DEFAULT_TOOLTIP_SIZE: HoverTooltipSize = {
+  height: 80,
+  width: 220,
+};
 const viewportDebug = createDebugLogger("timeline:viewport");
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+export function formatConfidencePercentage(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+export function formatDetectionHoverText(
+  detection: Pick<Detection, "avg_confidence">,
+): string {
+  return `Detection: ${formatConfidencePercentage(detection.avg_confidence)}`;
+}
+
+export function formatVocalizationHoverText(
+  row: Pick<TimelineHoverRow, "text"> & { confidence: number },
+): string {
+  return `${row.text}: ${formatConfidencePercentage(row.confidence)}`;
+}
+
+export function getHoverTooltipPosition({
+  anchorX,
+  anchorY,
+  margin = TOOLTIP_MARGIN_PX,
+  offsetX = TOOLTIP_OFFSET_X,
+  offsetY = TOOLTIP_OFFSET_Y,
+  tooltipHeight,
+  tooltipWidth,
+  trackHeight,
+  trackWidth,
+}: HoverTooltipPositionInput): HoverAnchor {
+  const maxLeft = Math.max(margin, trackWidth - tooltipWidth - margin);
+  const desiredLeft = anchorX + offsetX;
+  const left = clamp(desiredLeft, margin, maxLeft);
+
+  const desiredTop = anchorY + offsetY;
+  const flippedTop = anchorY - tooltipHeight - offsetY;
+  const shouldFlipUp = desiredTop + tooltipHeight > trackHeight - margin;
+  const maxTop = Math.max(margin, trackHeight - tooltipHeight - margin);
+  const top = clamp(shouldFlipUp ? flippedTop : desiredTop, margin, maxTop);
+
+  return { x: left, y: top };
+}
+
+function buildDetectionHoverCard(
+  rect: DetectionDrawRect,
+  anchor: HoverAnchor,
+): TimelineHoverCard {
+  return {
+    anchor,
+    key: rect.detection.row_id,
+    rows: [
+      {
+        key: rect.detection.row_id,
+        text: formatDetectionHoverText(rect.detection),
+        variant: "plain",
+      },
+    ],
+  };
+}
+
+function buildVocalizationHoverCard(
+  window: VocalizationDrawWindow,
+  anchor: HoverAnchor,
+): TimelineHoverCard {
+  return {
+    anchor,
+    key: window.key,
+    rows: window.hoverRows.map((row) => ({
+      key: row.key,
+      source: row.source,
+      text: formatVocalizationHoverText(row),
+      textColor: row.textColor,
+      variant: "vocalization",
+    })),
+  };
+}
 
 export function TimelineViewport({
   centerTimestamp,
-  enableDetectionHover = true,
+  enableOverlayHover = true,
   isPlaying,
   manifest,
   onInteractionChange,
@@ -72,10 +198,15 @@ export function TimelineViewport({
   const suppressNextClickRef = useRef(false);
   const displayCenterTimestampRef = useRef(centerTimestamp);
   const detectionRectsRef = useRef<ReturnType<typeof buildDetectionDrawRects>>([]);
+  const vocalizationWindowsRef =
+    useRef<ReturnType<typeof buildVocalizationDrawWindows>>([]);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [displayCenterTimestamp, setDisplayCenterTimestamp] = useState(centerTimestamp);
   const [dragState, setDragState] = useState<DragState | null>(null);
-  const [hoveredDetectionId, setHoveredDetectionId] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<TimelineHoverCard | null>(null);
+  const [tooltipSize, setTooltipSize] =
+    useState<HoverTooltipSize>(DEFAULT_TOOLTIP_SIZE);
   const [tileLoadVersion, setTileLoadVersion] = useState(0);
 
   useEffect(() => {
@@ -155,18 +286,29 @@ export function TimelineViewport({
     : [];
   const timeTicks = getTimeTicks(range, zoom);
   const visibleTileIndicesKey = visibleTileIndices.join(",");
-  const hoveredDetection =
-    hoveredDetectionId == null
+  const hoverMode =
+    !enableOverlayHover
+      ? "none"
+      : showDetections
+        ? "detection"
+        : showVocalizations
+          ? "vocalization"
+          : "none";
+  const hoveredCardPosition =
+    hoveredCard == null
       ? null
-      : detectionRects.find(
-          (rect) => rect.detection.row_id === hoveredDetectionId,
-        ) ?? null;
+      : getHoverTooltipPosition({
+          anchorX: hoveredCard.anchor.x,
+          anchorY: hoveredCard.anchor.y,
+          tooltipHeight: tooltipSize.height,
+          tooltipWidth: tooltipSize.width,
+          trackHeight,
+          trackWidth: width,
+        });
 
   useEffect(() => {
-    if (!enableDetectionHover) {
-      setHoveredDetectionId(null);
-    }
-  }, [enableDetectionHover]);
+    setHoveredCard(null);
+  }, [hoverMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,6 +334,36 @@ export function TimelineViewport({
   useEffect(() => {
     detectionRectsRef.current = detectionRects;
   }, [detectionRects]);
+
+  useEffect(() => {
+    vocalizationWindowsRef.current = vocalizationDrawWindows;
+  }, [vocalizationDrawWindows]);
+
+  useLayoutEffect(() => {
+    if (!hoveredCard) {
+      return;
+    }
+
+    const element = tooltipRef.current;
+    if (!element) {
+      return;
+    }
+
+    const nextSize = {
+      height: Math.ceil(element.offsetHeight),
+      width: Math.ceil(element.offsetWidth),
+    };
+
+    if (nextSize.height <= 0 || nextSize.width <= 0) {
+      return;
+    }
+
+    setTooltipSize((current) =>
+      current.width === nextSize.width && current.height === nextSize.height
+        ? current
+        : nextSize,
+    );
+  }, [hoveredCard, trackHeight, width]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -255,7 +427,7 @@ export function TimelineViewport({
       startX: event.clientX,
       startCenterTimestamp: displayCenterTimestampRef.current,
     });
-    setHoveredDetectionId(null);
+    setHoveredCard(null);
     onInteractionChange?.(true);
     viewportDebug("drag-start", {
       centerTimestamp: displayCenterTimestampRef.current,
@@ -276,7 +448,6 @@ export function TimelineViewport({
         dragExceededThresholdRef.current = true;
       }
 
-      const deltaSeconds = (-deltaX / width) * range.span;
       const previewTimestamp = pixelToTimestamp(
         width / 2 - deltaX,
         getViewportRange(manifest, zoom, dragState.startCenterTimestamp),
@@ -292,17 +463,35 @@ export function TimelineViewport({
       return;
     }
 
-    if (!enableDetectionHover) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const anchor = {
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    };
+
+    if (hoverMode === "detection") {
+      const nextHovered = findDetectionRectAtPoint(
+        detectionRectsRef.current,
+        anchor.x,
+        anchor.y,
+      );
+      setHoveredCard(nextHovered ? buildDetectionHoverCard(nextHovered, anchor) : null);
       return;
     }
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const nextHovered = findDetectionRectAtPoint(
-      detectionRectsRef.current,
-      event.clientX - bounds.left,
-      event.clientY - bounds.top,
-    );
-    setHoveredDetectionId(nextHovered ? nextHovered.detection.row_id : null);
+    if (hoverMode === "vocalization") {
+      const nextHovered = findVocalizationWindowAtPoint(
+        vocalizationWindowsRef.current,
+        anchor.x,
+        anchor.y,
+      );
+      setHoveredCard(
+        nextHovered ? buildVocalizationHoverCard(nextHovered, anchor) : null,
+      );
+      return;
+    }
+
+    setHoveredCard(null);
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>): void {
@@ -341,7 +530,7 @@ export function TimelineViewport({
 
   function handlePointerLeave(): void {
     if (!dragState) {
-      setHoveredDetectionId(null);
+      setHoveredCard(null);
     }
   }
 
@@ -395,19 +584,32 @@ export function TimelineViewport({
             <span className="timeline-playhead__marker" />
           </div>
 
-          {enableDetectionHover && hoveredDetection ? (
+          {hoveredCard && hoveredCardPosition ? (
             <div
+              ref={tooltipRef}
               className="timeline-tooltip"
               style={{
-                left: `${Math.min(width - 184, Math.max(10, hoveredDetection.x - 10))}px`,
-                top: "12px",
+                left: `${hoveredCardPosition.x}px`,
+                top: `${hoveredCardPosition.y}px`,
               }}
             >
-              <strong>{hoveredDetection.detection.label ?? "Unlabeled"}</strong>
-              <span>
-                Avg {Math.round(hoveredDetection.detection.avg_confidence * 100)}% /
-                Peak {Math.round(hoveredDetection.detection.peak_confidence * 100)}%
-              </span>
+              {hoveredCard.rows.map((row) =>
+                row.variant === "vocalization" ? (
+                  <span
+                    key={row.key}
+                    className={`timeline-tooltip__tag ${row.source === "inference" ? "timeline-tooltip__tag--inference" : ""}`}
+                    style={{
+                      color: row.textColor,
+                    }}
+                  >
+                    {row.text}
+                  </span>
+                ) : (
+                  <span key={row.key} className="timeline-tooltip__row">
+                    {row.text}
+                  </span>
+                ),
+              )}
             </div>
           ) : null}
         </div>

@@ -18,8 +18,8 @@ This pass adds a shared hover-card model for both overlay types:
 1. detection hover cards render near the actual pointer location inside the
    timeline track
 2. vocalization hover cards appear for hovered vocalization windows
-3. both cards use a consistent confidence presentation built around the label
-   `Confidence:`
+3. detection cards use a compact `Detection: <avg>%` readout while
+   vocalization cards render stacked per-type rows with color-coded confidence
 
 ## 2. Context
 
@@ -55,10 +55,9 @@ This design should:
 2. position the card near the user’s hovered location instead of a fixed track
    corner
 3. add hover detail for vocalization windows in the active canvas viewport
-4. present vocalization window detail as all vocal types in the window plus an
-   average confidence
-5. update detection tooltip copy so confidence uses the same `Confidence:`
-   label pattern
+4. present vocalization window detail as stacked per-type rows with matching
+   confidence values
+5. simplify detection tooltip copy to a single average-confidence line
 6. preserve the current manifest schema, playback behavior, and overlay mode
    semantics
 
@@ -170,16 +169,15 @@ respecting the rounded, clipped viewport.
 
 ### 7.3 Detection Hover Content
 
-Detection hover should keep the current detection label line and change the
-metric copy to a unified confidence label.
+Detection hover should use a compact, single-line summary instead of a title
+plus metric block.
 
 Proposed content:
 
-- title: detection label, or `Unlabeled`
-- detail line: `Confidence: 74% avg, 91% peak`
+- single line: `Detection: 74%`
 
-This keeps the detection tooltip more informative than vocalizations while still
-matching the requested confidence treatment.
+This matches the simplified popup treatment chosen during debugging while
+keeping the tooltip compact near the pointer.
 
 ### 7.4 Vocalization Hover Content
 
@@ -188,15 +186,16 @@ Add hover hit-testing for vocalization windows produced by
 
 For a hovered vocalization window, the hover card should show:
 
-- title: `Vocalizations`
-- type line containing all vocal types in the hovered time window
-- confidence line: `Confidence: 76% avg`
+- one stacked row per hovered vocalization type
+- row copy in the form `<Type>: <confidence>%`
+- the same color-coded styling used by the timeline's rendered vocalization
+  chips, including dashed inference treatment
 
 Detailed rules:
 
-- derive the type list from the grouped window labels
-- de-duplicate repeated type names while preserving first-seen order
-- compute the average confidence across all labels in the hovered window
+- derive the displayed rows from the grouped window labels
+- carry forward the same type-color mapping used in the window indicators
+- preserve source styling so inference rows keep the dashed treatment
 - round displayed percentages the same way detections do
 
 At coarse zoom levels where label chips are hidden, the hover target should
@@ -226,8 +225,7 @@ placement:
 
 - preserve the dark translucent panel treatment
 - retain compact typography
-- allow slightly wider content than the current 180px cap if needed for
-  multiple vocal types
+- allow stacked colored rows inside the popup instead of plain summary text
 - keep pointer-events disabled so the tooltip never interrupts drag/seek input
 
 ## 8. Implementation Surface

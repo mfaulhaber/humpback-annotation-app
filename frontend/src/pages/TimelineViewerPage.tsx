@@ -270,7 +270,7 @@ export function TimelineViewerPage() {
 
         <TimelineViewport
           centerTimestamp={centerTimestamp}
-          enableDetectionHover={isDetectionMode}
+          enableOverlayHover={isDetectionMode || showVocalizations}
           isPlaying={playback.isPlaying}
           manifest={manifest}
           onInteractionChange={setIsViewportInteracting}
