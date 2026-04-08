@@ -186,6 +186,33 @@ a {
   color: var(--timeline-accent);
 }
 
+.timeline-card__hints {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(114, 224, 192, 0.14);
+  border-radius: 16px;
+  background: rgba(8, 20, 28, 0.72);
+}
+
+.timeline-card__hints-label {
+  color: var(--timeline-accent-warm);
+  font-family:
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.timeline-card__hints-copy {
+  margin: 0;
+  color: var(--timeline-text-muted);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
 .timeline-card h2 {
   margin: 0;
   font-size: 1.45rem;
