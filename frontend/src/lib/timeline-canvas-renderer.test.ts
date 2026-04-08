@@ -16,6 +16,14 @@ class FakeCanvasContext implements TimelineCanvasContextLike {
   textBaseline: CanvasTextBaseline = "alphabetic";
 
   readonly calls: string[] = [];
+  readonly strokeRects: Array<{
+    height: number;
+    lineWidth: number;
+    strokeStyle: string | CanvasGradient | CanvasPattern;
+    width: number;
+    x: number;
+    y: number;
+  }> = [];
 
   beginPath(): void {
     this.calls.push("beginPath");
@@ -65,8 +73,16 @@ class FakeCanvasContext implements TimelineCanvasContextLike {
     this.calls.push("stroke");
   }
 
-  strokeRect(_: number, y: number): void {
+  strokeRect(x: number, y: number, width: number, height: number): void {
     this.calls.push(`strokeRect:${y}`);
+    this.strokeRects.push({
+      height,
+      lineWidth: this.lineWidth,
+      strokeStyle: this.strokeStyle,
+      width,
+      x,
+      y,
+    });
   }
 }
 
@@ -106,6 +122,8 @@ describe("timeline-canvas-renderer", () => {
     drawTimelineCanvas(context, {
       detectionRects,
       height: 336,
+      hoveredDetectionKey: null,
+      hoveredVocalizationKey: null,
       pixelRatio: 2,
       tileItems: [
         {
@@ -170,6 +188,8 @@ describe("timeline-canvas-renderer", () => {
     drawTimelineCanvas(context, {
       detectionRects: [],
       height: 336,
+      hoveredDetectionKey: null,
+      hoveredVocalizationKey: null,
       pixelRatio: 2,
       tileItems: [],
       vocalizationWindows,
@@ -202,6 +222,8 @@ describe("timeline-canvas-renderer", () => {
         },
       ],
       height: 336,
+      hoveredDetectionKey: null,
+      hoveredVocalizationKey: null,
       pixelRatio: 2,
       tileItems: [],
       vocalizationWindows: [
@@ -229,5 +251,71 @@ describe("timeline-canvas-renderer", () => {
 
     expect(context.calls).toContain("fillRect:40:280:12:8");
     expect(context.calls).toContain("fillRect:60:0:16:336");
+  });
+
+  it("draws a thin highlight outline for the hovered detection or vocalization window", () => {
+    const context = new FakeCanvasContext();
+
+    drawTimelineCanvas(context, {
+      detectionRects: [
+        {
+          detection: sampleTimelineManifest.detections[0]!,
+          fill: "rgba(64, 224, 192, 0.25)",
+          height: 336,
+          lane: 0,
+          stroke: "rgba(0, 0, 0, 0)",
+          width: 12,
+          x: 40,
+          y: 0,
+        },
+      ],
+      height: 336,
+      hoveredDetectionKey: sampleTimelineManifest.detections[0]!.row_id,
+      hoveredVocalizationKey: "window",
+      pixelRatio: 2,
+      tileItems: [],
+      vocalizationWindows: [
+        {
+          chipBorderWidth: 1.5,
+          chipFontSize: 9,
+          chipGap: 6,
+          chipHeight: 14,
+          chipHorizontalPadding: 4,
+          chipMaxWidth: 106.25,
+          chipTextBaselineOffset: 0.5,
+          hoverRows: [],
+          indicatorFill: "rgba(168, 130, 220, 0.4)",
+          indicatorHeight: 336,
+          indicatorWidth: 16,
+          key: "window",
+          labels: [],
+          width: 24,
+          x: 60,
+          y: 240,
+        },
+      ],
+      width: 900,
+    });
+
+    expect(context.strokeRects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          height: 335,
+          lineWidth: 1,
+          strokeStyle: "rgba(142, 244, 228, 0.72)",
+          width: 11,
+          x: 40.5,
+          y: 0.5,
+        }),
+        expect.objectContaining({
+          height: 335,
+          lineWidth: 1,
+          strokeStyle: "rgba(212, 186, 250, 0.78)",
+          width: 23,
+          x: 60.5,
+          y: 0.5,
+        }),
+      ]),
+    );
   });
 });

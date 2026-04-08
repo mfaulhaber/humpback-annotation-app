@@ -57,6 +57,11 @@ interface HoverAnchor {
   y: number;
 }
 
+interface HoverPointer {
+  clientX: number;
+  clientY: number;
+}
+
 interface HoverTooltipSize {
   height: number;
   width: number;
@@ -208,6 +213,94 @@ function buildVocalizationHoverCard(
   };
 }
 
+function getHoverAnchor(
+  pointer: HoverPointer,
+  bounds: DOMRect,
+): HoverAnchor {
+  return {
+    x: pointer.clientX - bounds.left,
+    y: pointer.clientY - bounds.top,
+  };
+}
+
+function isHoverAnchorWithinTrack(
+  anchor: HoverAnchor,
+  trackWidth: number,
+  trackHeight: number,
+): boolean {
+  return (
+    anchor.x >= 0 &&
+    anchor.x <= trackWidth &&
+    anchor.y >= 0 &&
+    anchor.y <= trackHeight
+  );
+}
+
+function resolveHoveredCard(
+  anchor: HoverAnchor,
+  hoverMode: "detection" | "none" | "vocalization",
+  detectionRects: DetectionDrawRect[],
+  vocalizationWindows: VocalizationDrawWindow[],
+): TimelineHoverCard | null {
+  if (hoverMode === "detection") {
+    const nextHovered = findDetectionRectAtPoint(
+      detectionRects,
+      anchor.x,
+      anchor.y,
+    );
+    return nextHovered ? buildDetectionHoverCard(nextHovered, anchor) : null;
+  }
+
+  if (hoverMode === "vocalization") {
+    const nextHovered = findVocalizationWindowAtPoint(
+      vocalizationWindows,
+      anchor.x,
+      anchor.y,
+    );
+    return nextHovered ? buildVocalizationHoverCard(nextHovered, anchor) : null;
+  }
+
+  return null;
+}
+
+function areHoverRowsEqual(
+  left: TimelineHoverRow[],
+  right: TimelineHoverRow[],
+): boolean {
+  return left.length === right.length &&
+    left.every((row, index) => {
+      const other = right[index];
+      return (
+        other != null &&
+        row.key === other.key &&
+        row.source === other.source &&
+        row.text === other.text &&
+        row.textColor === other.textColor &&
+        row.variant === other.variant
+      );
+    });
+}
+
+function areHoverCardsEqual(
+  left: TimelineHoverCard | null,
+  right: TimelineHoverCard | null,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (left == null || right == null) {
+    return left === right;
+  }
+
+  return (
+    left.key === right.key &&
+    left.anchor.x === right.anchor.x &&
+    left.anchor.y === right.anchor.y &&
+    areHoverRowsEqual(left.rows, right.rows)
+  );
+}
+
 export function TimelineViewport({
   centerTimestamp,
   enableOverlayHover = true,
@@ -235,6 +328,7 @@ export function TimelineViewport({
   const detectionRectsRef = useRef<ReturnType<typeof buildDetectionDrawRects>>([]);
   const vocalizationWindowsRef =
     useRef<ReturnType<typeof buildVocalizationDrawWindows>>([]);
+  const hoverPointerRef = useRef<HoverPointer | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [trackSize, setTrackSize] = useState<TrackSize>({
     height: 0,
@@ -407,8 +501,48 @@ export function TimelineViewport({
           trackHeight,
           trackWidth: width,
         });
+  const hoveredDetectionKey =
+    hoverMode === "detection" ? hoveredCard?.key ?? null : null;
+  const hoveredVocalizationKey =
+    hoverMode === "vocalization" ? hoveredCard?.key ?? null : null;
 
   useEffect(() => {
+    const hoverPointer = hoverPointerRef.current;
+    const element = trackRef.current;
+    if (
+      hoverPointer == null ||
+      element == null ||
+      width <= 0 ||
+      trackHeight <= 0 ||
+      hoverMode === "none"
+    ) {
+      setHoveredCard((current) => (current == null ? current : null));
+      return;
+    }
+
+    const anchor = getHoverAnchor(hoverPointer, element.getBoundingClientRect());
+    const nextHoveredCard = isHoverAnchorWithinTrack(anchor, width, trackHeight)
+      ? resolveHoveredCard(
+          anchor,
+          hoverMode,
+          detectionRects,
+          vocalizationDrawWindows,
+        )
+      : null;
+
+    setHoveredCard((current) =>
+      areHoverCardsEqual(current, nextHoveredCard) ? current : nextHoveredCard,
+    );
+  }, [
+    detectionRects,
+    hoverMode,
+    trackHeight,
+    vocalizationDrawWindows,
+    width,
+  ]);
+
+  useEffect(() => {
+    hoverPointerRef.current = null;
     setHoveredCard(null);
   }, [hoverMode]);
 
@@ -485,6 +619,8 @@ export function TimelineViewport({
     drawTimelineCanvas(context, {
       detectionRects,
       height: trackHeight,
+      hoveredDetectionKey,
+      hoveredVocalizationKey,
       pixelRatio,
       tileItems: visibleTileIndices.map((index) => {
         const currentTilePath = tilePath(manifest.job.id, zoom, index);
@@ -503,6 +639,8 @@ export function TimelineViewport({
     });
   }, [
     detectionRects,
+    hoveredDetectionKey,
+    hoveredVocalizationKey,
     manifest,
     range,
     tileLoadVersion,
@@ -527,6 +665,7 @@ export function TimelineViewport({
       startX: event.clientX,
       startCenterTimestamp: displayCenterTimestampRef.current,
     });
+    hoverPointerRef.current = null;
     setHoveredCard(null);
     onInteractionChange?.(true);
     viewportDebug("drag-start", {
@@ -564,34 +703,20 @@ export function TimelineViewport({
     }
 
     const bounds = event.currentTarget.getBoundingClientRect();
-    const anchor = {
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
+    const hoverPointer = {
+      clientX: event.clientX,
+      clientY: event.clientY,
     };
-
-    if (hoverMode === "detection") {
-      const nextHovered = findDetectionRectAtPoint(
+    const anchor = getHoverAnchor(hoverPointer, bounds);
+    hoverPointerRef.current = hoverPointer;
+    setHoveredCard(
+      resolveHoveredCard(
+        anchor,
+        hoverMode,
         detectionRectsRef.current,
-        anchor.x,
-        anchor.y,
-      );
-      setHoveredCard(nextHovered ? buildDetectionHoverCard(nextHovered, anchor) : null);
-      return;
-    }
-
-    if (hoverMode === "vocalization") {
-      const nextHovered = findVocalizationWindowAtPoint(
         vocalizationWindowsRef.current,
-        anchor.x,
-        anchor.y,
-      );
-      setHoveredCard(
-        nextHovered ? buildVocalizationHoverCard(nextHovered, anchor) : null,
-      );
-      return;
-    }
-
-    setHoveredCard(null);
+      ),
+    );
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>): void {
@@ -630,6 +755,7 @@ export function TimelineViewport({
 
   function handlePointerLeave(): void {
     if (!dragState) {
+      hoverPointerRef.current = null;
       setHoveredCard(null);
     }
   }
@@ -697,6 +823,7 @@ export function TimelineViewport({
             <div
               ref={tooltipRef}
               className="timeline-tooltip"
+              data-testid="timeline-tooltip"
               style={{
                 left: `${hoveredCardPosition.x}px`,
                 top: `${hoveredCardPosition.y}px`,
