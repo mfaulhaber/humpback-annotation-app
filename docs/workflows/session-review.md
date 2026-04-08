@@ -32,15 +32,24 @@ are no unresolved automated verification failures or review findings.
      `DECISIONS.md` updated?
    - Is automated coverage added or explicitly deferred with a reason when new
      logic is substantial?
-   - If `pnpm test` or `pnpm test:legacy` could not be run when relevant, is
-     the missing coverage called out clearly?
+   - If `pnpm test`, `pnpm test:ui`, `pnpm test:ui:visual`, or `pnpm test:legacy`
+     could not be run when relevant, is the missing coverage called out
+     clearly?
 
 4. **Run verification gates**
    - `pnpm typecheck`
    - `pnpm build`
    - `pnpm test` when the modified active frontend behavior is covered
+   - `pnpm test:ui` when the modified active frontend behavior depends on real
+     browser layout, resize handling, or route-level viewer execution covered
+     by the Playwright suite
+   - `pnpm test:ui:visual` when the modified active frontend behavior changes a
+     curated screenshot-covered viewer layout or visual baseline and the
+     committed baseline environment is available
    - `pnpm test:legacy` when the modified dormant API or data behavior is
      covered and required local services are available
+   - `pnpm test:ui:smoke` only when a real external export-root smoke run is
+     relevant and available
    - Note any manual verification already completed for relevant uncovered
      changed paths, but do not require new smoke-test execution as a gate for
      an explicit `session-end` request

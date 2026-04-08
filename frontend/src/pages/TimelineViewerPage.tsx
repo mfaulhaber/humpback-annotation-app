@@ -245,8 +245,11 @@ export function TimelineViewerPage() {
 
   return (
     <TimelineLayout chrome="viewer">
-      <div className="timeline-viewer">
-        <header className="timeline-viewer__header">
+      <div className="timeline-viewer" data-testid="timeline-viewer">
+        <header
+          className="timeline-viewer__header"
+          data-testid="timeline-viewer-header"
+        >
           <Link to="/" className="timeline-back-link">
             Back to jobs
           </Link>

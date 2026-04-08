@@ -159,10 +159,21 @@ function timelineExportPlugin(timelineExportRoot: string | undefined) {
     });
   }
 
+  function useTimelineDataMiddleware(server: {
+    middlewares: { use: (fn: typeof serveTimelineData) => void };
+  }) {
+    server.middlewares.use(serveTimelineData);
+  }
+
   return {
     name: "timeline-export-root",
     configureServer(server: { middlewares: { use: (fn: typeof serveTimelineData) => void } }) {
-      server.middlewares.use(serveTimelineData);
+      useTimelineDataMiddleware(server);
+    },
+    configurePreviewServer(server: {
+      middlewares: { use: (fn: typeof serveTimelineData) => void };
+    }) {
+      useTimelineDataMiddleware(server);
     },
   };
 }
@@ -170,11 +181,21 @@ function timelineExportPlugin(timelineExportRoot: string | undefined) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, repoRoot, "");
   const frontendPort = parseInt(env["FRONTEND_PORT"] ?? "6173", 10);
+  const previewPort = parseInt(
+    env["FRONTEND_PREVIEW_PORT"] ??
+      process.env["FRONTEND_PREVIEW_PORT"] ??
+      "4173",
+    10,
+  );
   const apiPort = env["API_PORT"] ?? "3001";
-  const timelineExportRoot = env["TIMELINE_EXPORT_ROOT"];
+  const timelineExportRoot =
+    env["TIMELINE_EXPORT_ROOT"] ?? process.env["TIMELINE_EXPORT_ROOT"];
 
   return {
     plugins: [react(), timelineExportPlugin(timelineExportRoot)],
+    preview: {
+      port: previewPort,
+    },
     server: {
       port: frontendPort,
       proxy: {

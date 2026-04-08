@@ -77,6 +77,9 @@ MEDIA_ROOT=/path/to/data/root pnpm dev --ingest /path/to/data/root/positives/hum
 | `pnpm typecheck` | Run TypeScript checks across all packages |
 | `pnpm build` | Build all packages |
 | `pnpm test` | Run the active frontend Vitest suite for the timeline viewer |
+| `pnpm test:ui` | Run the Playwright layout and resize suite against the committed real-derived viewer fixture |
+| `pnpm test:ui:visual` | Run the curated Playwright screenshot baselines against the committed viewer fixture on the committed macOS Chromium baseline environment |
+| `TIMELINE_EXPORT_ROOT=... pnpm test:ui:smoke` | Run the Playwright smoke suite against a real external export root |
 | `pnpm test:legacy` | Run the dormant API integration suite after starting its local stack |
 | `pnpm dev` | Start the dormant local annotation stack (empty DB) |
 | `pnpm dev --seed` | Start the dormant annotation stack with synthetic seed data |
@@ -301,6 +304,21 @@ humpback-annotation-app/
 - `pnpm test` runs the active frontend Vitest suite for timeline contract and
   canvas viewport utility coverage. It does not require DynamoDB Local or the
   dormant API stack.
+- `pnpm test:ui` builds the frontend, serves it through `vite preview`, mounts
+  the committed fixture in `frontend/test-data/timeline-export/` at `/data/*`,
+  and exercises browser-resident layout and resize behavior through Playwright.
+- `pnpm test:ui:visual` runs the small curated screenshot baseline set against
+  that same committed real-derived fixture. The committed baselines currently
+  target macOS Chromium, so run this lane on that same environment or refresh
+  the snapshots intentionally with
+  `pnpm --filter @humpback/frontend test:ui:update`.
+- `pnpm test:ui:smoke` is an opt-in local-only smoke lane for real exports.
+  Provide `TIMELINE_EXPORT_ROOT` explicitly, for example
+  `TIMELINE_EXPORT_ROOT=/Volumes/External_2TB/data/exports pnpm test:ui:smoke`.
+- The committed fixture is a curated subset derived from a real export: it
+  keeps the real `index.json` and `manifest.json`, includes only the tile
+  subset needed for deterministic browser coverage, and intentionally omits
+  audio files so the default automated suite stays small and reproducible.
 - `pnpm test:legacy` runs the older integration suite in `tests/`. Use it only
   when you are intentionally changing the dormant annotation/API path and have
   started the required local services.

@@ -59,7 +59,7 @@ export function TimelineControls({
   }, [centerTimestamp, isPlaying, readLiveTimestamp]);
 
   return (
-    <div className="timeline-controls">
+    <div className="timeline-controls" data-testid="timeline-controls">
       <div className="timeline-controls__zoom-row">
         {ZOOM_LEVELS.filter((entry) => availableZooms.includes(entry)).map((entry) => (
           <button

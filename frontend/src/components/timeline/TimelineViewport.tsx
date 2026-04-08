@@ -656,7 +656,7 @@ export function TimelineViewport({
   }
 
   return (
-    <section className="timeline-stage">
+    <section className="timeline-stage" data-testid="timeline-stage">
       <div className="timeline-stage__y-axis">
         <span>3.0k</span>
         <span>2.0k</span>
@@ -669,6 +669,7 @@ export function TimelineViewport({
         <div
           ref={trackRef}
           className={`timeline-track ${dragState ? "timeline-track--dragging" : ""}`}
+          data-testid="timeline-track"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -677,9 +678,18 @@ export function TimelineViewport({
           onClick={handleClick}
           role="presentation"
         >
-          <canvas ref={canvasRef} className="timeline-track__canvas" aria-hidden="true" />
+          <canvas
+            ref={canvasRef}
+            className="timeline-track__canvas"
+            data-testid="timeline-track-canvas"
+            aria-hidden="true"
+          />
 
-          <div className="timeline-playhead" aria-hidden="true">
+          <div
+            className="timeline-playhead"
+            data-testid="timeline-playhead"
+            aria-hidden="true"
+          >
             <span className="timeline-playhead__marker" />
           </div>
 
@@ -723,6 +733,7 @@ export function TimelineViewport({
         ) : (
           <div
             className="timeline-confidence-strip timeline-confidence-strip--placeholder"
+            data-testid="timeline-confidence-strip"
             aria-hidden="true"
           />
         )}
@@ -741,7 +752,7 @@ interface TimeAxisProps {
 
 function TimeAxis({ range, ticks, zoom }: TimeAxisProps) {
   return (
-    <div className="timeline-axis">
+    <div className="timeline-axis" data-testid="timeline-axis">
       {ticks.map((tick) => (
         <span
           key={tick}

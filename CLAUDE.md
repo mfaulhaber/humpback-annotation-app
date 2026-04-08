@@ -61,6 +61,10 @@ for custom domains.
   - Run type checks: `pnpm typecheck`
   - Build all packages: `pnpm build`
   - Run active frontend tests: `pnpm test`
+  - Run active viewer browser layout tests: `pnpm test:ui`
+  - Run active viewer browser visual baselines: `pnpm test:ui:visual`
+  - Run active viewer real-data smoke tests:
+    `TIMELINE_EXPORT_ROOT=... pnpm test:ui:smoke`
   - Run legacy API integration tests: `pnpm test:legacy`
   - Initialize DynamoDB Local tables: `pnpm db:local:init`
   - Seed DynamoDB Local: `pnpm db:local:seed`
@@ -129,8 +133,16 @@ for custom domains.
   - `pnpm build`
 - Run `pnpm test` when the touched active frontend or isolated package logic is
   covered.
+- Run `pnpm test:ui` when the touched active frontend behavior depends on real
+  browser layout, resize handling, or same-origin route-level viewer behavior
+  covered by the Playwright suite.
+- Run `pnpm test:ui:visual` when the touched active frontend behavior changes a
+  curated screenshot-covered viewer layout or visual baseline and the
+  committed baseline environment is available.
 - Run `pnpm test:legacy` when the touched dormant API, auth, or data behavior
   is covered and the required local services are available.
+- Run `pnpm test:ui:smoke` only when you intentionally want a local check
+  against a real external export root and one is available.
 - If a change requires manual verification because automated coverage is missing
   or unavailable, state exactly what was verified and what was not run.
 - A direct user invocation of `session-end` counts as confirmation that any
@@ -167,15 +179,24 @@ aligned with the real API/data model where practical.
 ## 5. Testing and Validation Requirements
 
 This repo includes TypeScript checks, package builds, a frontend Vitest suite
-for the active timeline viewer, and a legacy integration suite for the dormant
-API path.
+for timeline utilities, a Playwright browser suite for the active timeline
+viewer against a committed real-derived fixture plus an optional real-export
+smoke lane, and a legacy integration suite for the dormant API path.
 
 Every meaningful change should include:
 - `pnpm typecheck`
 - `pnpm build`
 - `pnpm test` when the touched active frontend behavior is covered
+- `pnpm test:ui` when the touched active frontend behavior depends on browser
+  layout, resize, or route-level viewer execution covered by the Playwright
+  suite
+- `pnpm test:ui:visual` when screenshot-covered viewer visuals intentionally
+  change or need regression confirmation and the committed baseline
+  environment is available
 - `pnpm test:legacy` when the touched dormant API or data behavior is covered
   and the local stack is available
+- `pnpm test:ui:smoke` only when a real external export-root smoke run is
+  relevant and available
 - Targeted manual verification for changed viewer interactions that are not yet
   credibly covered by the frontend suite when the user or implementer chooses
   to perform it
@@ -193,6 +214,9 @@ A change is done only if:
 - `pnpm build` passes
 - `pnpm test` is run when appropriate, or the exact verification gap is called
   out
+- `pnpm test:ui` / `pnpm test:ui:visual` are run when appropriate for the
+  touched active frontend behavior and available baseline environment, or the
+  exact verification gap is called out
 - Relevant documentation is updated
 - Core annotation, media-delivery, and implemented-vs-planned rules are still
   preserved
@@ -269,6 +293,11 @@ humpback-annotation-app/
 ### 8.4 Runtime Constraints
 
 - `pnpm test` does not require local services
+- `pnpm test:ui` and `pnpm test:ui:visual` build and preview the frontend
+  against the committed fixture in `frontend/test-data/timeline-export/`
+- the committed visual screenshot baselines currently target macOS Chromium
+- `pnpm test:ui:smoke` expects `TIMELINE_EXPORT_ROOT` to point at a real export
+  root
 - `pnpm test:legacy` expects the local API and DynamoDB stack to be available
 - `pnpm dev:timeline` expects `TIMELINE_EXPORT_ROOT` to point at a directory
   containing `index.json` and exported job folders

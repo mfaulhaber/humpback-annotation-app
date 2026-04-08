@@ -50,8 +50,16 @@ reviewable implementation diff.
    - `pnpm build`
    - `pnpm test` when the touched active frontend or isolated package logic is
      covered
+   - `pnpm test:ui` when the touched active frontend behavior depends on real
+     browser layout, resize handling, or route-level viewer execution covered
+     by the Playwright suite
+   - `pnpm test:ui:visual` when the touched active frontend behavior changes a
+     curated screenshot-covered viewer layout or visual baseline and the
+     committed baseline environment is available
    - `pnpm test:legacy` when the touched dormant API, auth, or data behavior
      is covered and the required local services are available
+   - `pnpm test:ui:smoke` only when you intentionally want a local check
+     against a real external export root and one is available
    - Re-run the relevant manual smoke path only when automated coverage is
      unavailable or incomplete
 
@@ -77,8 +85,8 @@ reviewable implementation diff.
 - Do not refactor unrelated code
 - Do not quietly change annotation semantics, DynamoDB access patterns, or
   media-delivery assumptions without documenting that intent
-- If `pnpm test` or `pnpm test:legacy` cannot be run when relevant, state
-  exactly why and what was verified instead
+- If `pnpm test`, `pnpm test:ui`, `pnpm test:ui:visual`, or `pnpm test:legacy`
+  cannot be run when relevant, state exactly why and what was verified instead
 
 ## Does NOT
 
