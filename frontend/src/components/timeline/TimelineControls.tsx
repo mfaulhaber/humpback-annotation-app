@@ -77,7 +77,10 @@ export function TimelineControls({
 
       <div className="timeline-controls__main-row">
         <div className="timeline-controls__transport-rail">
-          <span className="timeline-controls__timecode">
+          <span
+            className="timeline-controls__timecode"
+            data-testid="timeline-timecode"
+          >
             {formatUtcTimestamp(displayTimestamp)}
           </span>
           <div className="timeline-controls__transport">

@@ -113,6 +113,10 @@ function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
 }
 
+function hasPrimaryPointerButton(buttons: number): boolean {
+  return (buttons & 1) === 1;
+}
+
 function timeToPercent(timestamp: number, range: TimeRange): number {
   if (range.span <= 0) {
     return 0;
@@ -676,12 +680,51 @@ export function TimelineViewport({
     });
   }
 
+  function updateHoverFromPointer(event: React.PointerEvent<HTMLDivElement>): void {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const hoverPointer = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    };
+    const anchor = getHoverAnchor(hoverPointer, bounds);
+
+    hoverPointerRef.current = hoverPointer;
+    setHoveredCard(
+      resolveHoveredCard(
+        anchor,
+        hoverMode,
+        detectionRectsRef.current,
+        vocalizationWindowsRef.current,
+      ),
+    );
+  }
+
+  function releaseTrackPointerCapture(pointerId: number): void {
+    const element = trackRef.current;
+    if (element?.hasPointerCapture(pointerId)) {
+      element.releasePointerCapture(pointerId);
+    }
+  }
+
+  function stopDragging(pointerId: number): void {
+    dragExceededThresholdRef.current = false;
+    setDragState(null);
+    onInteractionChange?.(false);
+    releaseTrackPointerCapture(pointerId);
+  }
+
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
     if (width <= 0) {
       return;
     }
 
     if (dragState && dragState.pointerId === event.pointerId) {
+      if (!hasPrimaryPointerButton(event.buttons)) {
+        stopDragging(event.pointerId);
+        updateHoverFromPointer(event);
+        return;
+      }
+
       const deltaX = event.clientX - dragState.startX;
       if (Math.abs(deltaX) >= DRAG_THRESHOLD_PX) {
         dragExceededThresholdRef.current = true;
@@ -702,21 +745,7 @@ export function TimelineViewport({
       return;
     }
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const hoverPointer = {
-      clientX: event.clientX,
-      clientY: event.clientY,
-    };
-    const anchor = getHoverAnchor(hoverPointer, bounds);
-    hoverPointerRef.current = hoverPointer;
-    setHoveredCard(
-      resolveHoveredCard(
-        anchor,
-        hoverMode,
-        detectionRectsRef.current,
-        vocalizationWindowsRef.current,
-      ),
-    );
+    updateHoverFromPointer(event);
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>): void {
@@ -747,10 +776,17 @@ export function TimelineViewport({
       suppressNextClickRef.current = true;
     }
 
-    dragExceededThresholdRef.current = false;
-    setDragState(null);
-    onInteractionChange?.(false);
-    trackRef.current?.releasePointerCapture(event.pointerId);
+    stopDragging(event.pointerId);
+  }
+
+  function handleLostPointerCapture(
+    event: React.PointerEvent<HTMLDivElement>,
+  ): void {
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    stopDragging(event.pointerId);
   }
 
   function handlePointerLeave(): void {
@@ -800,6 +836,7 @@ export function TimelineViewport({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          onLostPointerCapture={handleLostPointerCapture}
           onPointerLeave={handlePointerLeave}
           onClick={handleClick}
           role="presentation"
