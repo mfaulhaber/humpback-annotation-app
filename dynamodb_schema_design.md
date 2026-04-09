@@ -1,4 +1,8 @@
-# DynamoDB Schema Design --- Whale Annotation App
+# Legacy DynamoDB Schema Design for the Shelved Annotation Stack
+
+> Status: Historical DynamoDB reference for the shelved annotation backend.
+> The active product in this repository is the timeline viewer; use this
+> document only when intentionally working on the dormant annotation/API path.
 
 ## Overview
 

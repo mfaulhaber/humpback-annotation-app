@@ -1,4 +1,8 @@
-# Humpback Annotation App — Codex Agent Instructions
+# Humpback Timeline Viewer — Codex Agent Instructions
+
+> Status: The active product is the timeline viewer. The legacy human
+> annotation stack remains in-repo but is shelved; only treat it as active when
+> a task explicitly targets the dormant annotation/API path.
 
 `CLAUDE.md` is the authoritative project rulebook. Read it first.
 

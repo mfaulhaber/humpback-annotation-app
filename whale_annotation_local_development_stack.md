@@ -1,4 +1,9 @@
-# Whale Annotation App — Local Development Stack
+# Shelved Whale Annotation App — Local Development Stack
+
+> Status: Historical documentation for the shelved annotation stack. The active
+> product in this repository is the timeline viewer described in `README.md`
+> and `CLAUDE.md`, and parts of this document predate the current viewer-first
+> local-development workflow.
 
 ## 1. Goals
 

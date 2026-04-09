@@ -1,5 +1,8 @@
+# Technical High-Level Design Pack for the Shelved Annotation Stack
 
-# Technical High-Level Design Pack
+> Status: Historical design documentation for the shelved annotation workflow.
+> The active product in this repository is the timeline viewer described in
+> `README.md` and `CLAUDE.md`.
 
 ## 1. Scope
 

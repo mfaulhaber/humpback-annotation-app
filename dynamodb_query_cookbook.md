@@ -1,5 +1,8 @@
+# Legacy DynamoDB Query Cookbook for the Shelved Annotation Stack
 
-# DynamoDB Query Cookbook — Whale Annotation App
+> Status: Historical query reference for the shelved annotation backend. The
+> active product in this repository is the timeline viewer; use this document
+> only when intentionally working on the dormant annotation/API path.
 
 This cookbook documents the exact DynamoDB access patterns used by the Whale Annotation App backend.
 

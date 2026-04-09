@@ -1,4 +1,8 @@
-# Whale Annotation App --- V1 Architecture Spec
+# Shelved Whale Annotation App --- V1 Architecture Spec
+
+> Status: Historical architecture documentation for the shelved annotation
+> workflow. The active product in this repository is the timeline viewer
+> described in `README.md` and `CLAUDE.md`.
 
 ## 1. Goals
 
