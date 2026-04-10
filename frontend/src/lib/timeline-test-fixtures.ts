@@ -21,6 +21,13 @@ export const sampleTimelineEntryWithHints: TimelineEntry = {
   end_timestamp: 1_711_936_800,
 };
 
+export const sampleTimelineEntryWithViewerDefaults: TimelineEntry = {
+  ...sampleTimelineEntryWithHints,
+  starting_pos: 1_711_930_250,
+  zoom_level: "5m",
+  view_mode: "vocalizations",
+};
+
 export const sampleTimelineManifest: TimelineManifest = {
   version: 1,
   job: {

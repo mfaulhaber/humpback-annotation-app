@@ -1,12 +1,23 @@
 export const ZOOM_LEVELS = ["24h", "6h", "1h", "15m", "5m", "1m"] as const;
 
 export type ZoomLevel = (typeof ZOOM_LEVELS)[number];
+export const TIMELINE_VIEW_MODES = [
+  "detections",
+  "vocalizations",
+] as const;
+export type TimelineViewMode = (typeof TIMELINE_VIEW_MODES)[number];
+
+export interface TimelineViewDefaults {
+  starting_pos?: number;
+  zoom_level?: ZoomLevel;
+  view_mode?: TimelineViewMode;
+}
 
 export interface TimelineIndex {
   timelines: TimelineEntry[];
 }
 
-export interface TimelineEntry {
+export interface TimelineEntry extends TimelineViewDefaults {
   job_id: string;
   hydrophone_name: string;
   hints?: string;
@@ -96,6 +107,10 @@ function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function isIntegerNumber(value: unknown): value is number {
+  return isNumber(value) && Number.isInteger(value);
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string";
 }
@@ -113,6 +128,13 @@ function isZoomLevel(value: unknown): value is ZoomLevel {
   return isString(value) && ZOOM_LEVELS.includes(value as ZoomLevel);
 }
 
+function isTimelineViewMode(value: unknown): value is TimelineViewMode {
+  return (
+    isString(value) &&
+    TIMELINE_VIEW_MODES.includes(value as TimelineViewMode)
+  );
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
@@ -122,13 +144,24 @@ function isTimelineEntry(value: unknown): value is TimelineEntry {
     return false;
   }
 
+  const startTimestamp = value["start_timestamp"];
+  const endTimestamp = value["end_timestamp"];
+  const startingPos = value["starting_pos"];
+
   return (
     isUuid(value["job_id"]) &&
     isString(value["hydrophone_name"]) &&
     (value["hints"] === undefined || isString(value["hints"])) &&
     isString(value["species"]) &&
-    isNumber(value["start_timestamp"]) &&
-    isNumber(value["end_timestamp"])
+    isNumber(startTimestamp) &&
+    isNumber(endTimestamp) &&
+    (startingPos === undefined ||
+      (isIntegerNumber(startingPos) &&
+        startingPos >= startTimestamp &&
+        startingPos <= endTimestamp)) &&
+    (value["zoom_level"] === undefined || isZoomLevel(value["zoom_level"])) &&
+    (value["view_mode"] === undefined ||
+      isTimelineViewMode(value["view_mode"]))
   );
 }
 
@@ -138,6 +171,13 @@ export function isTimelineIndex(value: unknown): value is TimelineIndex {
     Array.isArray(value["timelines"]) &&
     value["timelines"].every(isTimelineEntry)
   );
+}
+
+export function findTimelineEntry(
+  index: TimelineIndex,
+  jobId: string,
+): TimelineEntry | undefined {
+  return index.timelines.find((timeline) => timeline.job_id === jobId);
 }
 
 function isTileMetadata(value: unknown): value is TileMetadata {

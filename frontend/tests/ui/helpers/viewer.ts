@@ -4,10 +4,9 @@ import {
   type Page,
 } from "@playwright/test";
 import {
-  committedFixtureEndTimestamp,
+  committedFixtureDefaultTimestamp,
   committedFixtureHotspotTimestamp,
   committedFixtureJobId,
-  committedFixtureStartTimestamp,
 } from "./export-root.js";
 
 export interface GeometryBox {
@@ -129,6 +128,14 @@ export async function openIndex(page: Page): Promise<void> {
   });
 }
 
+export async function readTimecode(page: Page): Promise<string> {
+  return page.getByTestId("timeline-timecode").innerText();
+}
+
+export async function readActiveZoom(page: Page): Promise<string> {
+  return page.locator(".timeline-zoom-chip--active").innerText();
+}
+
 export async function setZoom(
   page: Page,
   zoom: "24h" | "6h" | "1h" | "15m" | "5m" | "1m",
@@ -194,12 +201,12 @@ export async function centerViewerOnCommittedFixtureTimestamp(
   page: Page,
   timestamp: number,
 ): Promise<void> {
-  const span =
-    committedFixtureEndTimestamp - committedFixtureStartTimestamp;
-  const ratio = (timestamp - committedFixtureStartTimestamp) / span;
+  const viewportSpan = 86_400;
+  const ratio =
+    0.5 + (timestamp - committedFixtureDefaultTimestamp) / viewportSpan;
 
   await setZoom(page, "24h");
-  await clickTrackAtRatio(page, ratio);
+  await clickTrackAtRatio(page, Math.max(0, Math.min(1, ratio)));
 }
 
 export async function centerViewerOnCommittedHotspot(
@@ -218,7 +225,7 @@ export async function openCommittedFixtureViewer(
   await page.goto(`/${committedFixtureJobId}`);
   await waitForViewerStable(page);
 
-  if (options.navigateToHotspot ?? true) {
+  if (options.navigateToHotspot ?? false) {
     await centerViewerOnCommittedHotspot(page);
   }
 

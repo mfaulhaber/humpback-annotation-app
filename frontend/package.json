@@ -9,7 +9,7 @@
     "typecheck": "tsc --project tsconfig.json --pretty false",
     "build": "vite build",
     "test": "vitest run",
-    "test:ui": "playwright test tests/ui/viewer-layout.spec.ts tests/ui/viewer-resize.spec.ts",
+    "test:ui": "playwright test tests/ui/viewer-layout.spec.ts tests/ui/viewer-resize.spec.ts tests/ui/viewer-defaults.spec.ts",
     "test:ui:visual": "playwright test tests/ui/viewer-visual.spec.ts",
     "test:ui:smoke": "PLAYWRIGHT_UI_MODE=smoke playwright test tests/ui/viewer-smoke.spec.ts",
     "test:ui:update": "playwright test tests/ui/viewer-visual.spec.ts --update-snapshots"

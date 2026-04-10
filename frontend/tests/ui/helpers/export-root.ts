@@ -9,6 +9,15 @@ export const committedFixtureJobId =
 export const committedFixtureStartTimestamp = 1_635_465_600;
 export const committedFixtureEndTimestamp = 1_635_552_000;
 export const committedFixtureHotspotTimestamp = 1_635_473_100;
+export const committedFixtureDefaultTimestamp =
+  committedFixtureHotspotTimestamp;
+export const committedFixtureDefaultZoom = "15m" as const;
+export const committedFixtureDefaultOverlayMode = "vocalizations" as const;
+export const committedFixtureDefaultTimecode = "02:05:00 UTC";
+export const committedFixtureQueryOverrideTimestamp = 1_635_465_900;
+export const committedFixtureQueryOverrideZoom = "1h" as const;
+export const committedFixtureQueryOverrideOverlayMode = "detections" as const;
+export const committedFixtureQueryOverrideTimecode = "00:05:00 UTC";
 
 const currentFileDir = path.dirname(fileURLToPath(import.meta.url));
 

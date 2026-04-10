@@ -6,7 +6,10 @@
       "hints": "Scroll the timeline view to the time 02:05 and then zoom into the 15m, 5m, and 1m zoom levels. Select \"Vocalizations\" to see trained model predicted humpback call types. Select \"Detections\" to see model predicted whale/not-whale time windows. Click the play button to listen to the hydrophone recording.",
       "species": "ar-v2-promoted",
       "start_timestamp": 1635465600,
-      "end_timestamp": 1635552000
+      "end_timestamp": 1635552000,
+      "starting_pos": 1635473100,
+      "zoom_level": "15m",
+      "view_mode": "vocalizations"
     }
   ]
 }

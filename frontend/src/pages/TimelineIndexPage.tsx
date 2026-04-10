@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchTimelineIndex } from "../api/timeline.js";
 import { TimelineLayout } from "../components/timeline/TimelineLayout.js";
 import type { TimelineEntry } from "../lib/timeline-contract.js";
+import { buildTimelineViewerHref } from "../lib/timeline-viewer-state.js";
 import {
   formatTimelineCardRange,
 } from "../lib/timeline-math.js";
@@ -76,7 +77,7 @@ export function TimelineIndexPage() {
               return (
                 <Link
                   key={timeline.job_id}
-                  to={`/${timeline.job_id}`}
+                  to={buildTimelineViewerHref(timeline.job_id, timeline)}
                   className="timeline-card"
                 >
                   <div className="timeline-card__summary">

@@ -90,9 +90,18 @@ The app expects:
 - `data/{jobId}/audio/chunk_0000.mp3` for audio chunks
 - UUID job ids in both `job_id` and `job.id`
 - an optional `hints` string on each landing-page entry
+- an optional `starting_pos` integer UTC timestamp on each landing-page entry
+  to set the initial centered playhead
+- an optional `zoom_level` on each landing-page entry to set the initial zoom
+- an optional `view_mode` on each landing-page entry to set the initial
+  overlay mode to `detections` or `vocalizations`
 
 Everything is fetched same-origin. The viewer does not proxy manifests, tiles,
-or audio through application compute.
+or audio through application compute. When present, the optional
+`starting_pos`, `zoom_level`, and `view_mode` values from `index.json` seed the
+initial viewer state for that job. The home page links include those values as
+query params so copied links preserve the same initial state, and explicit
+query params on `/:jobId` override the matching `index.json` entry.
 
 Example `data/index.json` entry:
 
@@ -103,7 +112,10 @@ Example `data/index.json` entry:
   "species": "ar-v2-promoted",
   "start_timestamp": 1711929600,
   "end_timestamp": 1711936800,
-  "hints": "Scroll the timeline view to the time 02:05 and then zoom into the 15m, 5m, and 1m zoom levels. Select \"Vocalizations\" to see trained model predicted humpback call types. Select \"Detections\" to see model predicted whale/not-whale time windows. Click the play button to listen to the hydrophone recording."
+  "hints": "Scroll the timeline view to the time 02:05 and then zoom into the 15m, 5m, and 1m zoom levels. Select \"Vocalizations\" to see trained model predicted humpback call types. Select \"Detections\" to see model predicted whale/not-whale time windows. Click the play button to listen to the hydrophone recording.",
+  "starting_pos": 1711933500,
+  "zoom_level": "15m",
+  "view_mode": "vocalizations"
 }
 ```
 
@@ -111,6 +123,8 @@ Example `data/index.json` entry:
 
 - `/` loads the timeline registry from `data/index.json`
 - `/:jobId` loads the job viewer from `data/{jobId}/manifest.json`
+- `/:jobId?starting_pos=...&zoom_level=...&view_mode=...` optionally overrides
+  the initial centered playhead, zoom, and overlay mode
 
 ## Commands
 
