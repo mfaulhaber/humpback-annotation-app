@@ -16,7 +16,8 @@ viewer state:
 These fields should let an export author open a job directly into a useful
 review state without changing the manifest contract or introducing API
 mediation. The viewer should continue to work for existing exports that do not
-provide these fields.
+provide these fields. The same state should also be expressible in `/:jobId`
+query params so links can preserve or override those defaults.
 
 ## 2. Context
 
@@ -47,6 +48,8 @@ This change should:
 4. keep the manifest schema unchanged
 5. preserve current viewer fallbacks when defaults are missing, unsupported, or
    unavailable
+6. allow explicit URL query params to override export-provided defaults when a
+   link needs a different initial view
 
 ## 4. Non-Goals
 
@@ -213,27 +216,33 @@ The viewer should resolve initial state in this order:
 
 1. load `manifest.json` for the selected job
 2. attempt to load `index.json` and find the matching `job_id`
-3. derive initial state from the matching entry when optional fields are
+3. parse any supported query params from `location.search`
+4. derive initial state from the matching entry when optional fields are
    present
-4. fall back to current manifest-derived defaults when the index entry is
-   missing or the optional fields are absent
+5. apply query-param overrides on top of the entry-derived defaults
+6. fall back to current manifest-derived defaults when neither source provides
+   a value
 
 Recommended initial-state algorithm:
 
 ```ts
 const entry = findTimelineEntry(index, jobId);
+const queryDefaults = parseTimelineViewSearchParams(
+  new URLSearchParams(location.search),
+);
+const initialDefaults = mergeTimelineViewDefaults(entry, queryDefaults);
 
 const initialCenterTimestamp = clampTimestamp(
   manifest,
-  entry?.starting_pos ?? initialTimelineCenterTimestamp(manifest),
+  initialDefaults.starting_pos ?? initialTimelineCenterTimestamp(manifest),
 );
 
-const initialZoom = entry?.zoom_level
-  ? preferredInitialZoom(manifest, entry.zoom_level)
+const initialZoom = initialDefaults.zoom_level
+  ? preferredInitialZoom(manifest, initialDefaults.zoom_level)
   : preferredInitialZoom(manifest, "1h");
 
 const initialOverlayMode: TimelineOverlayMode =
-  entry?.view_mode ?? "detections";
+  initialDefaults.view_mode ?? "detections";
 ```
 
 ## 8. Loading Strategy
@@ -245,6 +254,7 @@ Recommended behavior:
 
 - treat `manifest.json` as required
 - treat `index.json` as optional enhancement data for initial viewer defaults
+- treat supported query params as optional explicit overrides for those defaults
 - fetch both concurrently on the viewer page
 - if the manifest load fails, show the existing viewer error state
 - if the index load fails, log and continue with current default viewer
@@ -252,6 +262,21 @@ Recommended behavior:
 
 This preserves direct-link robustness while still allowing export authors to
 control the initial viewer state through `index.json`.
+
+## 8.1 Query Param Contract
+
+Supported query params:
+
+- `starting_pos`
+- `zoom_level`
+- `view_mode`
+
+Semantics:
+
+- the names and value shapes intentionally match the `index.json` fields
+- home-page links should include these params when a job entry defines them
+- explicit query params should override the matching values from `index.json`
+- invalid query params should be ignored rather than causing viewer failure
 
 ## 9. User Experience Notes
 

@@ -15,6 +15,7 @@ import {
 import {
   sampleTimelineEntry,
   sampleTimelineEntryWithHints,
+  sampleTimelineEntryWithViewerDefaults,
   sampleTimelineManifest,
 } from "./timeline-test-fixtures.js";
 
@@ -26,12 +27,45 @@ describe("timeline-contract", () => {
   it("validates timeline indexes built from export entries", () => {
     expect(isTimelineIndex({ timelines: [sampleTimelineEntry] })).toBe(true);
     expect(isTimelineIndex({ timelines: [sampleTimelineEntryWithHints] })).toBe(true);
+    expect(isTimelineIndex({ timelines: [sampleTimelineEntryWithViewerDefaults] })).toBe(
+      true,
+    );
     expect(isTimelineIndex({ timelines: [{ ...sampleTimelineEntry, job_id: 42 }] })).toBe(
       false,
     );
     expect(
       isTimelineIndex({
         timelines: [{ ...sampleTimelineEntryWithHints, hints: 42 }],
+      }),
+    ).toBe(false);
+    expect(
+      isTimelineIndex({
+        timelines: [{ ...sampleTimelineEntry, starting_pos: "1711930250" }],
+      }),
+    ).toBe(false);
+    expect(
+      isTimelineIndex({
+        timelines: [{ ...sampleTimelineEntry, starting_pos: 1_711_930_250.5 }],
+      }),
+    ).toBe(false);
+    expect(
+      isTimelineIndex({
+        timelines: [
+          {
+            ...sampleTimelineEntry,
+            starting_pos: sampleTimelineEntry.end_timestamp + 60,
+          },
+        ],
+      }),
+    ).toBe(false);
+    expect(
+      isTimelineIndex({
+        timelines: [{ ...sampleTimelineEntry, zoom_level: "30s" }],
+      }),
+    ).toBe(false);
+    expect(
+      isTimelineIndex({
+        timelines: [{ ...sampleTimelineEntry, view_mode: "none" }],
       }),
     ).toBe(false);
     expect(

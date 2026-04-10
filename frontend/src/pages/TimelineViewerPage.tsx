@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { fetchTimelineManifest } from "../api/timeline.js";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { fetchTimelineIndex, fetchTimelineManifest } from "../api/timeline.js";
 import { TimelineControls } from "../components/timeline/TimelineControls.js";
 import { TimelineLayout } from "../components/timeline/TimelineLayout.js";
 import { TimelineViewport } from "../components/timeline/TimelineViewport.js";
 import { useTimelinePlayback } from "../hooks/useTimelinePlayback.js";
 import {
   availableZoomLevels,
-  preferredInitialZoom,
+  findTimelineEntry,
   type TimelineManifest,
   type ZoomLevel,
 } from "../lib/timeline-contract.js";
@@ -15,11 +15,13 @@ import {
   clampTimestamp,
   formatTimelineSpan,
   getPanStepSeconds,
-  initialTimelineCenterTimestamp,
 } from "../lib/timeline-math.js";
 import { createDebugLogger } from "../lib/debug-log.js";
 import {
   getOverlayVisibility,
+  mergeTimelineViewDefaults,
+  parseTimelineViewSearchParams,
+  resolveInitialTimelineViewState,
   type TimelineOverlayMode,
   shouldSyncCenterTimestampFromPlayback,
   toggleOverlayMode,
@@ -29,6 +31,7 @@ const viewerDebug = createDebugLogger("timeline:viewer");
 
 export function TimelineViewerPage() {
   const { jobId = "" } = useParams();
+  const location = useLocation();
   const [manifest, setManifest] = useState<TimelineManifest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,33 +53,94 @@ export function TimelineViewerPage() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
+    const queryDefaults = parseTimelineViewSearchParams(
+      new URLSearchParams(location.search),
+    );
 
-    fetchTimelineManifest(jobId)
-      .then((response) => {
-        setManifest(response);
-        const initialZoom = preferredInitialZoom(response, "1h");
-        const initialCenter = initialTimelineCenterTimestamp(response);
+    async function loadTimeline(): Promise<void> {
+      setLoading(true);
+      setError(null);
 
-        setZoom(initialZoom);
-        setCenterTimestamp(initialCenter);
+      try {
+        const [manifestResult, indexResult] = await Promise.allSettled([
+          fetchTimelineManifest(jobId),
+          fetchTimelineIndex(),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (manifestResult.status === "rejected") {
+          throw manifestResult.reason;
+        }
+
+        if (indexResult.status === "rejected") {
+          viewerDebug("index-defaults-unavailable", {
+            jobId,
+            reason:
+              indexResult.reason instanceof Error
+                ? indexResult.reason.message
+                : String(indexResult.reason),
+          });
+        }
+
+        const timelineEntry =
+          indexResult.status === "fulfilled"
+            ? findTimelineEntry(indexResult.value, jobId)
+            : undefined;
+        const initialDefaults = mergeTimelineViewDefaults(
+          timelineEntry,
+          queryDefaults,
+        );
+        const initialState = resolveInitialTimelineViewState(
+          manifestResult.value,
+          initialDefaults,
+        );
+
+        setManifest(manifestResult.value);
+        setZoom(initialState.zoom);
+        setCenterTimestamp(initialState.centerTimestamp);
+        setOverlayMode(initialState.overlayMode);
         setIsViewportInteracting(false);
         viewerDebug("manifest-loaded", {
-          jobId: response.job.id,
-          initialCenterTimestamp: initialCenter,
-          initialZoom,
+          jobId: manifestResult.value.job.id,
+          initialCenterTimestamp: initialState.centerTimestamp,
+          initialOverlayMode: initialState.overlayMode,
+          initialZoom: initialState.zoom,
+          usedIndexDefaults:
+            timelineEntry?.starting_pos !== undefined ||
+            timelineEntry?.view_mode !== undefined ||
+            timelineEntry?.zoom_level !== undefined,
+          usedQueryDefaults:
+            queryDefaults.starting_pos !== undefined ||
+            queryDefaults.view_mode !== undefined ||
+            queryDefaults.zoom_level !== undefined,
         });
-      })
-      .catch((reason: unknown) =>
+      } catch (reason: unknown) {
+        if (cancelled) {
+          return;
+        }
+
         setError(
           reason instanceof Error
             ? reason.message
             : `Failed to load timeline ${jobId}.`,
-        ),
-      )
-      .finally(() => setLoading(false));
-  }, [jobId]);
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadTimeline();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, location.search]);
 
   useEffect(() => {
     if (!manifest) {
